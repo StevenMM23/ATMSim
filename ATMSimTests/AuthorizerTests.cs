@@ -90,5 +90,97 @@ namespace ATMSimTests
             respuesta.BalanceActual.Should().BeNull();
 
         }
+
+        #region Pruebas Creada por el Equipo #1
+
+        //Comprueba que la cuenta que se esta creando tiene el saldo que le fue asignado desde el principio
+        [Fact]
+        public void Account_creation_with_initial_balance_should_increase_balance()
+        {
+            // ARRANGE
+            IHSM hsm = new HSM();
+            IAutorizador sut = CrearAutorizador("Autorizador", hsm);
+            var llave = hsm.GenerarLlave();
+            sut.InstalarLlave(llave.LlaveEncriptada);
+
+            var balanceActual = 10_000;
+            string numeroCuenta = CrearCuentaYTarjeta(sut, TipoCuenta.Ahorros, balanceActual, "455555", "1234");
+            byte[] criptogramaPin = Encriptar("1234", llave.LlaveEnClaro);
+            // ACT
+
+            var respuestaAhorro = sut.ConsultarBalance(numeroCuenta, criptogramaPin);
+
+
+            // ASSERT
+            respuestaAhorro.BalanceActual.Should().Be(10_000);
+
+        }
+
+
+        //Comprueba que las cuentas de Ahorro no son capaz de hacer sobregiros
+        [Fact]
+        public void Withdrawal_over_balance_should_decline_for_savings_account()
+        {
+            // ARRANGE
+            IHSM hsm = new HSM();
+            IAutorizador sut = CrearAutorizador("Autorizador", hsm);
+            ComponentesLlave llave = hsm.GenerarLlave();
+            sut.InstalarLlave(llave.LlaveEncriptada);
+
+            string numeroCuenta = CrearCuentaYTarjeta(sut, TipoCuenta.Ahorros, 10_000, "455555", "1234");
+            byte[] criptogramaPin = Encriptar("1234", llave.LlaveEnClaro);
+
+            // ACT
+            RespuestaRetiro respuesta = sut.AutorizarRetiro(numeroCuenta, 15_500, criptogramaPin);
+
+
+            // ASSERT
+            respuesta.CodigoRespuesta.Should().Be(51);
+
+
+        }
+
+        //Comprueba que el pin asignado fue exitoso y que si se ingresa correctamente le dara una respuesta del balance
+        [Fact]
+        public void Pin_assignment_should_succeed()
+        {
+            // ARRANGE
+            IHSM hsm = new HSM();
+            IAutorizador sut = CrearAutorizador("Autorizador", hsm);
+            ComponentesLlave llave = hsm.GenerarLlave();
+            sut.InstalarLlave(llave.LlaveEncriptada);
+
+            string numeroCuenta = CrearCuentaYTarjeta(sut, TipoCuenta.Corriente, 10_000, "455555", "0000");
+
+            // ACT
+            sut.AsignarPin(numeroCuenta, "1234");
+            byte[] criptogramaPin = Encriptar("1234", llave.LlaveEnClaro);
+            RespuestaConsultaDeBalance respuesta = sut.ConsultarBalance(numeroCuenta, criptogramaPin);
+
+            // ASSERT
+            respuesta.BalanceActual.Should().Be(10_000);
+        }
+
+        //Se prueba si se es capaz de asignar un Pin a una Tarjeta que no es valida
+        [Fact]
+        public void Pin_assignment_with_invalid_tarjeta_should_fail()
+        {
+            // ARRANGE
+            IHSM hsm = new HSM();
+            IAutorizador sut = CrearAutorizador("Autorizador", hsm);
+            ComponentesLlave llave = hsm.GenerarLlave();
+            sut.InstalarLlave(llave.LlaveEncriptada);
+
+            string numeroCuenta = CrearCuentaYTarjeta(sut, TipoCuenta.Corriente, 10_000, "455555", "0000");
+            string invalidTarjeta = "9999999999";
+
+            // ACT
+            Action asignarPin = () => sut.AsignarPin(invalidTarjeta, "1234");
+
+            // ASSERT
+            asignarPin.Should().Throw<ArgumentException>();
+        }
     }
+    #endregion
 }
+
