@@ -15,6 +15,33 @@ public interface IATM
     public void Reestablecer();
 }
 
+//Factory Method para desacoplar la creacion de objetos ATM de su implementacion
+
+#region Factory Method
+
+public interface IATMFactory
+{
+    public IATM CrearATM(string nombre);
+}
+public class ATMFactory : IATMFactory
+{
+    private readonly IConsoleWriter consoleWriter;
+    private readonly IThreadSleeper threadSleeper;
+
+    public ATMFactory(IConsoleWriter consoleWriter, IThreadSleeper threadSleeper)
+    {
+        this.consoleWriter = consoleWriter;
+        this.threadSleeper = threadSleeper;
+    }
+
+    public IATM CrearATM(string nombre)
+    {
+        return new ATM(nombre, consoleWriter, threadSleeper);
+    }
+}
+
+#endregion
+
 public class ATMNoEstaRegistradoException : Exception
 {
 }
@@ -225,4 +252,6 @@ public class ATM : IATM
             }
         }
     }
+
+
 }
