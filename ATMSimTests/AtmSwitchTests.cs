@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace ATMSimTests
 {
@@ -135,7 +136,46 @@ namespace ATMSimTests
 
         }
 
+        #region Pruebas del Equipo 1
 
+        // Verificar que el método Encriptar devuelve el resultado esperado cuando se le pasa un texto plano y una llave en claro válida.
+        [Fact]
+        public void Test_Encrypt_Returns_Successful_Result()
+        {
+            // Arrange
+            var sut = new AtmSwitchTests();
+            string textoPlano = "Este es un texto de prueba.";
+            byte[] llaveEnClaro = new byte[64];
+            RandomNumberGenerator.Create().GetBytes(llaveEnClaro);
 
+            // Act
+            byte[] textoCifrado = sut.Encriptar(textoPlano, llaveEnClaro);
+
+            // Assert
+            byte[] llave = llaveEnClaro.Skip(0).Take(32).ToArray();
+            byte[] iv = llaveEnClaro.Skip(32).ToArray();
+
+            using (Aes llaveAes = Aes.Create())
+            {
+                llaveAes.Key = llave;
+                llaveAes.IV = iv;
+
+                ICryptoTransform desencriptador = llaveAes.CreateDecryptor();
+
+                using (MemoryStream ms = new MemoryStream(textoCifrado))
+                {
+                    using (CryptoStream cs = new CryptoStream(ms, desencriptador, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader sr = new StreamReader(cs))
+                        {
+                            string textoDesencriptado = sr.ReadToEnd();
+                            Assert.Equal(textoPlano, textoDesencriptado);
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
     }
 }
