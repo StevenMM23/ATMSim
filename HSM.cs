@@ -9,9 +9,9 @@ namespace ATMSim
 {
     public struct ComponentesLlave
     {
-        public byte[] LlaveEnClaro {  get; private set; }
+        public byte[] LlaveEnClaro { get; private set; }
         public byte[] LlaveEncriptada { get; private set; }
-        public ComponentesLlave(byte[] llaveEnClaro, byte[] llaveEncriptada) 
+        public ComponentesLlave(byte[] llaveEnClaro, byte[] llaveEncriptada)
             => (LlaveEnClaro, LlaveEncriptada) = (llaveEnClaro, llaveEncriptada);
     }
 
@@ -25,7 +25,7 @@ namespace ATMSim
         public bool ValidarPin(byte[] criptogramaPinAValidar, byte[] criptogramaLlave, byte[] criptogramaPinCorrecto);
 
     }
-    public class HSM: IHSM
+    public class HSM : IHSM
     {
         private const int TAMANO_LLAVE = 32; // bytes
 
@@ -78,7 +78,13 @@ namespace ATMSim
         private byte[] ExtraerIV(byte[] llaveIv) => llaveIv.Skip(TAMANO_LLAVE).ToArray();
 
 
-        private byte[] EncriptarLlave(byte[] llaveIv)
+        //Extract Method Refactoring - Equipo 1
+
+        #region Extract Method Refactoring
+
+        #region Codigo Nuevo
+
+        private ICryptoTransform CrearTransformador(bool esCifrado)
         {
             var llave = lmk.Key;
             var iv = lmk.IV;
@@ -86,7 +92,12 @@ namespace ATMSim
             aes.Key = llave;
             aes.IV = iv;
             aes.Padding = PaddingMode.None;
-            ICryptoTransform encriptador = aes.CreateEncryptor();
+            return esCifrado ? aes.CreateEncryptor() : aes.CreateDecryptor();
+        }
+
+        private byte[] EncriptarLlave(byte[] llaveIv)
+        {
+            ICryptoTransform encriptador = CrearTransformador(true);
 
             using (MemoryStream ms = new MemoryStream())
             {
@@ -102,13 +113,7 @@ namespace ATMSim
 
         private byte[] DesencriptarLlave(byte[] criptogramaLlaveIv)
         {
-            var llave = lmk.Key;
-            var iv = lmk.IV;
-            Aes aes = Aes.Create();
-            aes.Key = llave;
-            aes.IV = iv;
-            aes.Padding = PaddingMode.None;
-            ICryptoTransform desencriptador = aes.CreateDecryptor();
+            ICryptoTransform desencriptador = CrearTransformador(false);
 
             using (MemoryStream ms = new MemoryStream(criptogramaLlaveIv))
             {
@@ -118,16 +123,82 @@ namespace ATMSim
                     int totalBytesLeidos = 0;
                     while (totalBytesLeidos < criptogramaLlaveIv.Length)
                     {
-                        int bytesLeidos = cs.Read(desencriptado, 0, criptogramaLlaveIv.Length);
-                        if (bytesLeidos == 0) break;
+                        int bytesLeidos = cs.Read(desencriptado, totalBytesLeidos, criptogramaLlaveIv.Length - totalBytesLeidos);
+                        if (bytesLeidos == 0)
+                        {
+                            break;
+                        }
                         totalBytesLeidos += bytesLeidos;
                     }
-                    
-                    var llaveEnClaro = desencriptado.Take(totalBytesLeidos).ToArray();
-                    return llaveEnClaro;
+                    Array.Resize(ref desencriptado, totalBytesLeidos);
+                    return desencriptado;
                 }
             }
         }
+
+        #endregion
+
+
+        #region Codigo Anterior
+
+        //Codigo Anterior: 
+
+        // private byte[] EncriptarLlave(byte[] llaveIv)
+        // {
+        //     var llave = lmk.Key;
+        //     var iv = lmk.IV;
+        //     Aes aes = Aes.Create();
+        //     aes.Key = llave;
+        //     aes.IV = iv;
+        //     aes.Padding = PaddingMode.None;
+        //     ICryptoTransform encriptador = aes.CreateEncryptor();
+        //
+        //     using (MemoryStream ms = new MemoryStream())
+        //     {
+        //         using (CryptoStream cs = new CryptoStream(ms, encriptador, CryptoStreamMode.Write))
+        //         {
+        //             cs.Write(llaveIv);
+        //             var llaveEncriptada = ms.ToArray();
+        //             return llaveEncriptada;
+        //         }
+        //     }
+        // }
+        //
+        //
+        // private byte[] DesencriptarLlave(byte[] criptogramaLlaveIv)
+        // {
+        //     var llave = lmk.Key;
+        //     var iv = lmk.IV;
+        //     Aes aes = Aes.Create();
+        //     aes.Key = llave;
+        //     aes.IV = iv;
+        //     aes.Padding = PaddingMode.None;
+        //     ICryptoTransform desencriptador = aes.CreateDecryptor();
+        //
+        //     using (MemoryStream ms = new MemoryStream(criptogramaLlaveIv))
+        //     {
+        //         using (CryptoStream cs = new CryptoStream(ms, desencriptador, CryptoStreamMode.Read))
+        //         {
+        //             var desencriptado = new byte[criptogramaLlaveIv.Length];
+        //             int totalBytesLeidos = 0;
+        //             while (totalBytesLeidos < criptogramaLlaveIv.Length)
+        //             {
+        //                 int bytesLeidos = cs.Read(desencriptado, 0, criptogramaLlaveIv.Length);
+        //                 if (bytesLeidos == 0) break;
+        //                 totalBytesLeidos += bytesLeidos;
+        //             }
+        //
+        //             var llaveEnClaro = desencriptado.Take(totalBytesLeidos).ToArray();
+        //             return llaveEnClaro;
+        //         }
+        //     }
+        // }
+
+        #endregion
+
+
+        #endregion
+
 
         private byte[] EncriptarDato(string textoPlano, byte[] llaveIv)
         {
