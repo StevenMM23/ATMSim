@@ -29,13 +29,13 @@ namespace ATMSim
         public int Monto { get; private set; }
         public ComandoDispensarEfectivo(int monto) { Monto = monto; }
     }
-    
+
     public class ComandoImprimirRecibo : Comando
     {
         public string TextoRecibo { get; private set; }
         public ComandoImprimirRecibo(string textoRecibo) { TextoRecibo = textoRecibo; }
     }
-    
+
     public class ComandoMostrarInfoEnPantalla : Comando
     {
         public string TextoPantalla { get; private set; }
@@ -45,13 +45,13 @@ namespace ATMSim
 
     public class ComandoDevolverTarjeta : Comando { }
 
-    public class ATM: IATM
+    public class ATM : IATM
     {
         private const int TAMANO_LLAVE = 32; // bytes
 
 
         byte[]? tpk;
-        public IATMSwitch? Switch { get; set; } 
+        public IATMSwitch? Switch { get; set; }
         public string Nombre { get; set; }
 
         private IConsoleWriter consoleWriter;
@@ -74,6 +74,7 @@ namespace ATMSim
 
             if (!Regex.Match(pin, @"[0-9]{4}").Success)
                 MostrarError("ERROR.\n\nEl Pin debe ser un número de 4 digitos.");
+
 
             byte[] criptogramaPin = Encriptar(pin);
 
@@ -106,11 +107,11 @@ namespace ATMSim
         {
             foreach (Comando comando in comandos)
             {
-                switch (comando) 
+                switch (comando)
                 {
                     case ComandoDispensarEfectivo cmd: EjecutarComandoDispensarEfectivo(cmd); break;
                     case ComandoDevolverTarjeta cmd: EjecutarComandoDevolverTarjeta(cmd); break;
-                    case ComandoImprimirRecibo cmd: EjecutarComandoImprimirRecibo(cmd); break; 
+                    case ComandoImprimirRecibo cmd: EjecutarComandoImprimirRecibo(cmd); break;
                     case ComandoMostrarInfoEnPantalla cmd: EjecutarComandoMostrarInfoEnPantalla(cmd); break;
                     default: throw new InvalidOperationException($"Comando {comando.GetType().Name} no soportado por el ATM");
                 }
@@ -157,7 +158,7 @@ namespace ATMSim
         {
             consoleWriter.ForegroundColor = ConsoleColor.Yellow;
             consoleWriter.WriteLine("> Mostrando pantalla:");
-            consoleWriter.ForegroundColor = comando.Error? ConsoleColor.Red : ConsoleColor.White;
+            consoleWriter.ForegroundColor = comando.Error ? ConsoleColor.Red : ConsoleColor.White;
             consoleWriter.BackgroundColor = ConsoleColor.DarkBlue;
             string texto = "\t" + comando.TextoPantalla.Replace("\n", "\n\t"); // Poniendole sangría
             consoleWriter.Write(texto);

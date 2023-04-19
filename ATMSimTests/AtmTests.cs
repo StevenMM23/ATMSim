@@ -91,7 +91,192 @@ namespace ATMSimTests
 
         }
 
+        #region Pruebas del Equipo 1
 
+        //Prueba el Withdrawl con la Tecla sin Recibos AAC
+        [Fact]
+        public void Withdrawal_with_balance_on_account_is_successful_when_using_teclasRetiroSinRecibo()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroTarjeta = CrearCuentaYTarjeta(autorizador, TipoCuenta.Ahorros, 20_000, "459413", "1234");
+
+            // ACT
+            sut.EnviarTransactionRequest(teclasRetiroSinRecibo, numeroTarjeta, "1234", 100);
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Efectivo dispensado: 100");
+        }
+
+        //Se prueba que falle cuando no se tenga el PIN Indicado
+        [Fact]
+        public void Withdrawal_fails_when_using_invalid_PIN()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroTarjeta = CrearCuentaYTarjeta(autorizador, TipoCuenta.Ahorros, 20_000, "459413", "1234");
+
+            // ACT
+            sut.EnviarTransactionRequest("AAA", numeroTarjeta, "0000", 100);
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tPin incorrecto\n> Fin de la Transaccion\n\n\n");
+        }
+
+        //Se Prueba que falle cuando la cuenta no exista
+        [Fact]
+        public void Withdrawal_fails_when_account_does_not_exist()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroTarjeta = CrearCuentaYTarjeta(autorizador, TipoCuenta.Ahorros, 20_000, "459413", "1234");
+
+            // ACT
+            sut.EnviarTransactionRequest("AAA", "1234567890", "1234", 100);
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tLo Sentimos. En este momento no podemos procesar su transacción.\n\t\n\tPor favor intente más tarde...\n> Fin de la Transaccion\n\n\n");
+        }
+        [Fact]
+        public void Balance_inquiry_displays_correct_balance_for_valid_card_and_PIN_combination()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroCuenta = autorizador.CrearCuenta(TipoCuenta.Ahorros, 20_000);
+            string numeroTarjeta = autorizador.CrearTarjeta("459413", numeroCuenta);
+            autorizador.AsignarPin(numeroTarjeta, "1234");
+
+            // ACT
+            sut.EnviarTransactionRequest("B", numeroTarjeta, "1234");
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tSu balance actual es de: 20000\n> Fin de la Transaccion\n\n\n");
+        }
+        [Fact]
+        public void Balance_inquiry_fails_when_using_invalid_PIN()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroCuenta = autorizador.CrearCuenta(TipoCuenta.Ahorros, 20_000);
+            string numeroTarjeta = autorizador.CrearTarjeta("459413", numeroCuenta);
+            autorizador.AsignarPin(numeroTarjeta, "1234");
+
+            // ACT
+            sut.EnviarTransactionRequest("B", numeroTarjeta, "5678");
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tPin incorrecto\n> Fin de la Transaccion\n\n\n");
+        }
+        [Fact]
+        public void Balance_inquiry_fails_when_card_is_not_registered_with_authorizer()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            // ACT
+            sut.EnviarTransactionRequest("B", "4594130000000000", "1234");
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tTarjeta no reconocida\n> Fin de la Transaccion\n\n\n");
+        }
+        [Fact]
+        public void Balance_inquiry_fails_when_account_is_not_linked_to_card()
+        {
+            // ARRANGE
+            FakeConsoleWriter consoleWriter = new FakeConsoleWriter();
+            FakeThreadSleeper threadSleeper = new FakeThreadSleeper();
+
+            IHSM hsm = new HSM();
+
+            IATMSwitch atmSwitch = CrearSwitch(hsm, consoleWriter);
+
+            IATM sut = CrearATM("AJP001", consoleWriter, threadSleeper);
+            RegistrarATMEnSwitch(sut, atmSwitch, hsm);
+
+            IAutorizador autorizador = CrearAutorizador("AutDB", hsm);
+            RegistrarAutorizadorEnSwitch(autorizador, atmSwitch, hsm);
+
+            string numeroCuenta = autorizador.CrearCuenta(TipoCuenta.Ahorros, 20_000);
+            string numeroTarjeta = autorizador.CrearTarjeta("459413", numeroCuenta);
+
+            // ACT
+            sut.EnviarTransactionRequest(teclasConsultaDeBalance, numeroTarjeta, "1234");
+
+            // ASSERT
+            consoleWriter.consoleText.Should().Contain("> Mostrando pantalla:\n\tPin incorrecto\n> Fin de la Transaccion\n\n\n");
+        }
+        #endregion
 
     }
 }
