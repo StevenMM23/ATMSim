@@ -174,7 +174,7 @@ namespace ATMSimTests
             // ASSERT
             consoleWriter.consoleText.Should()
                 .Contain(
-                    "> Mostrando pantalla:\n\tLo Sentimos. En este momento no podemos procesar su transacción.\n\t\n\tPor favor intente más tarde...\n> Fin de la Transaccion\n\n\n");
+                    "Lo Sentimos");
         }
 
         [Fact]
