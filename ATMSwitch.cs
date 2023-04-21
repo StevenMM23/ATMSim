@@ -106,14 +106,37 @@ namespace ATMSim
             this.consoleWriter = consoleWriter;
         }
 
+        //Substitute Algorithm Refactoring - Equipo 1
+
+        #region Substitute Algorithm Refactoring
+
+        //se ha utilizado el método TryAdd para simplificar el código.
+
+        #region Codigo Antiguo
+
+        //public void RegistrarATM(IATM atm, byte[] criptogramaLlave)
+        //{
+        //    if (LlavesDeAtm.ContainsKey(atm.Nombre))
+        //        throw new EntidadYaRegistradaException($"El ATM {atm.Nombre} ya se encuentra registrado");
+
+        //    LlavesDeAtm[atm.Nombre] = criptogramaLlave;
+        //    atm.Switch = (IATMSwitch) this;
+        //}
+
+        #endregion
+
+        #region Codigo Nuevo 
+
         public void RegistrarATM(IATM atm, byte[] criptogramaLlave)
         {
-            if (LlavesDeAtm.ContainsKey(atm.Nombre))
+            if (!LlavesDeAtm.TryAdd(atm.Nombre, criptogramaLlave))
                 throw new EntidadYaRegistradaException($"El ATM {atm.Nombre} ya se encuentra registrado");
 
-            LlavesDeAtm[atm.Nombre] = criptogramaLlave;
-            atm.Switch = (IATMSwitch) this;
+            atm.Switch = (IATMSwitch)this;
         }
+
+        #endregion
+        #endregion
 
         public void AgregarConfiguracionOpKey(ConfiguracionOpKey configuracionOpKey)
         {
