@@ -257,15 +257,43 @@ namespace ATMSim
             return comandos;
         }
 
+        //Substitute Algorithm Refactoring - Equipo 1
+
+        #region Substitute Algorithm Refactoring
+
+        //se ha utilizado el método TryAdd del diccionario Autorizadores para evitar la necesidad de una comprobación previa.
+
+        #region Codigo Antiguo
+
+        //public void RegistrarAutorizador(IAutorizador autorizador, byte[] criptogramaLlaveAutorizador)
+        //{
+        //    if (Autorizadores.ContainsKey(autorizador.Nombre))
+        //        throw new EntidadYaRegistradaException($"El Autorizador {autorizador.Nombre} ya se encuentra registrado");
+
+
+        //    Autorizadores[autorizador.Nombre] = autorizador;
+        //    LlavesDeAutorizador[autorizador.Nombre] = criptogramaLlaveAutorizador;
+        //}
+
+        #endregion
+
+        #region Codigo Nuevo
+
         public void RegistrarAutorizador(IAutorizador autorizador, byte[] criptogramaLlaveAutorizador)
         {
-            if (Autorizadores.ContainsKey(autorizador.Nombre))
+            if (Autorizadores.TryAdd(autorizador.Nombre, autorizador))
+            {
+                LlavesDeAutorizador[autorizador.Nombre] = criptogramaLlaveAutorizador;
+            }
+            else
+            {
                 throw new EntidadYaRegistradaException($"El Autorizador {autorizador.Nombre} ya se encuentra registrado");
-
-
-            Autorizadores[autorizador.Nombre] = autorizador;
-            LlavesDeAutorizador[autorizador.Nombre] = criptogramaLlaveAutorizador;
+            }
         }
+
+        #endregion
+
+        #endregion
 
         public void EliminarAutorizador(string nombreAutorizador)
         {
