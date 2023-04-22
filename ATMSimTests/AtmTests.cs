@@ -290,6 +290,19 @@ namespace ATMSimTests
             consoleWriter.consoleText.Should()
                 .Contain("> Mostrando pantalla:\n\tPin incorrecto\n> Fin de la Transaccion\n\n\n");
         }
+
+        [Fact]
+        public void EnviarTransactionRequest_Throws_InvalidOperationException_When_ATM_Not_Configured()
+        {
+            // Arrange
+            var consoleWriter = new FakeConsoleWriter();
+            var threadSleeper = new FakeThreadSleeper();
+            ATM atm = new ATM("TestATM", consoleWriter, threadSleeper);
+
+            // Act & Assert
+            Assert.Throws<InvalidOperationException>(() => atm.EnviarTransactionRequest("opKeyBuffer", "numeroTarjeta", "pin"));
+        }
+
         #endregion
 
     }
