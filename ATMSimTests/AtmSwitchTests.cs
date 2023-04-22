@@ -1,6 +1,7 @@
 ﻿using ATMSim;
 using ATMSimTests.Fakes;
 using FluentAssertions;
+using FluentAssertions.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,7 +136,48 @@ namespace ATMSimTests
 
         }
 
+        //Verificar que cuando se llama al método AgregarRuta con un bin y un nombre de autorizador que no existen en la tabla de ruteo, se agrega correctamente una nueva ruta con el bin y el autorizador especifico
+        [Fact]
+        public void AgregarRuta_RutaNoExiste_RutaAgregadaCorrectamente()
+        {
+            // Arrange
+            var tablaRuteo = new List<Ruta>();
+            var autorizadores = new Dictionary<string, string>
+            {
+                {"Autorizador1", "Correo1" },
+                {"Autorizador2", "Correo2" }
+            };
+            var servicio = new ServicioRuteo(tablaRuteo, autorizadores);
+
+            // Act
+            servicio.AgregarRuta("123456", "Autorizador1");
+
+            // Assert
+            Assert.Single(tablaRuteo);
+            Assert.Equal("123456", tablaRuteo[0].Bin);
+            Assert.Equal("Autorizador1", tablaRuteo[0].Destino);
+        }
+
+        internal class ServicioRuteo
+        {
+            private List<Ruta> tablaRuteo;
+            private Dictionary<string, string> autorizadores;
+
+            public ServicioRuteo(List<Ruta> tablaRuteo, Dictionary<string, string> autorizadores)
+            {
+                this.tablaRuteo = tablaRuteo;
+                this.autorizadores = autorizadores;
+            }
+
+            internal void AgregarRuta(string v1, string v2)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
 
+       
     }
+
+ 
 }
