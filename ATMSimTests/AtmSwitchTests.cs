@@ -176,8 +176,40 @@ namespace ATMSimTests
         }
 
 
-       
+
+        //Verificar que se lanza una excepción cuando no se encuentra una configuracionOpKey para la secuencia pasada como argumento
+        [Fact]
+        public void DeterminarTipoDeTransaccion_NoExisteConfiguracionOpKey_LanzaExcepcion()
+        {
+            // Arrange
+            var tablaOpKeys = new List<ConfiguracionOpKey>
+            {
+                new ConfiguracionOpKey { Teclas = "ABC"},
+                new ConfiguracionOpKey { Teclas = "DEF"}
+            };
+            var servicio = new Servicio(tablaOpKeys);
+
+            // Act & Assert
+            Assert.Throws<SecuenciaDeTeclasNoReconocidas>(() => servicio.DeterminarTipoDeTransaccion("XYZ"));
+        }
+
+        internal class Servicio
+        {
+            private List<ConfiguracionOpKey> tablaOpKeys;
+
+            public Servicio(List<ConfiguracionOpKey> tablaOpKeys)
+            {
+                this.tablaOpKeys = tablaOpKeys;
+            }
+
+            internal object DeterminarTipoDeTransaccion(string v)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
     }
 
- 
+
 }
