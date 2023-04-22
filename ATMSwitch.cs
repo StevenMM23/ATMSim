@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -71,7 +72,7 @@ namespace ATMSim
         public string Destino { get; set; }
     }
 
-    public interface IATMSwitch 
+    public interface IATMSwitch
     {
         public void RegistrarATM(IATM atm, byte[] criptogramaLlave);
         public void AgregarConfiguracionOpKey(ConfiguracionOpKey configuracionOpKey);
@@ -79,7 +80,7 @@ namespace ATMSim
         public void RegistrarAutorizador(IAutorizador autorizador, byte[] criptogramaLlaveAutorizador);
         public void EliminarAutorizador(string nombreAutorizador);
         public void AgregarRuta(string bin, string nombreAutorizador);
-        public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, int monto, byte[] criptogramaPin);
+        public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, double monto, byte[] criptogramaPin);
 
 
     }
@@ -112,7 +113,7 @@ namespace ATMSim
                 throw new EntidadYaRegistradaException($"El ATM {atm.Nombre} ya se encuentra registrado");
 
             LlavesDeAtm[atm.Nombre] = criptogramaLlave;
-            atm.Switch = (IATMSwitch) this;
+            atm.Switch = (IATMSwitch)this;
         }
 
         public void AgregarConfiguracionOpKey(ConfiguracionOpKey configuracionOpKey)
@@ -134,7 +135,7 @@ namespace ATMSim
             LlavesDeAtm.Remove(atm.Nombre);
         }
 
-        public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, int monto, byte[] criptogramaPin)
+        public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, double monto, byte[] criptogramaPin)
         {
             ConfiguracionOpKey opKeyConfig;
             IAutorizador autorizador;
@@ -162,9 +163,9 @@ namespace ATMSim
 
             switch (opKeyConfig.TipoTransaccion)
             {
-                case TipoTransaccion.Retiro: 
+                case TipoTransaccion.Retiro:
                     return AutorizarRetiro(atm, numeroTarjeta, monto, criptogramaTraducidoPin, autorizador, opKeyConfig);
-                case TipoTransaccion.Consulta: 
+                case TipoTransaccion.Consulta:
                     return AutorizarConsulta(atm, numeroTarjeta, criptogramaTraducidoPin, autorizador, opKeyConfig);
                 default:
                     return MostrarErrorGenerico();
@@ -182,9 +183,25 @@ namespace ATMSim
             return comandos;
         }
 
-        private List<Comando> AutorizarRetiro(IATM atm, string numeroTarjeta, int monto, byte[] criptogramaPin, IAutorizador autorizador, ConfiguracionOpKey opKeyConfig)
+        private List<Comando> AutorizarRetiro(IATM atm, string numeroTarjeta, double monto, byte[] criptogramaPin, IAutorizador autorizador, ConfiguracionOpKey opKeyConfig)
         {
             List<Comando> comandos = new List<Comando>();
+
+            decimal montoDecimal;
+            if (!decimal.TryParse(monto.ToString(CultureInfo.InvariantCulture), out montoDecimal))
+            {
+                comandos.Add(new ComandoMostrarInfoEnPantalla("Monto inválido para retiro", true));
+                return comandos;
+            }
+
+            decimal montoRedondeado = decimal.Round(montoDecimal, 2);
+            if (montoDecimal != montoRedondeado)
+            {
+                comandos.Add(new ComandoMostrarInfoEnPantalla("El monto debe tener solo dos decimales", true));
+                return comandos;
+            }
+
+            monto = Convert.ToDouble(montoRedondeado);
 
             monto = monto == 0 ? opKeyConfig.Monto ?? 0 : monto;
 
@@ -220,7 +237,7 @@ namespace ATMSim
                     break;
                 case 55:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Pin incorrecto", true));
-                    break ;
+                    break;
                 case 56:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Tarjeta no reconocida", true));
                     break;
@@ -355,8 +372,8 @@ namespace ATMSim
                 rutaExistente.Destino = "nombreAutorizador";
             }
             else
-            // Si no existe el bin en la tabla de bines, agregarlo
-                tablaRuteo.Add(new Ruta { Bin = bin , Destino = nombreAutorizador});
+                // Si no existe el bin en la tabla de bines, agregarlo
+                tablaRuteo.Add(new Ruta { Bin = bin, Destino = nombreAutorizador });
 
         }
 

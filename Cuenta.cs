@@ -16,9 +16,9 @@ namespace ATMSim
         public TipoCuenta Tipo { get; }
         public string Numero { get; }
 
-        private int monto;
+        private double monto;
 
-        public int Monto
+        public double Monto
         {
             get => monto;
             set
@@ -32,7 +32,7 @@ namespace ATMSim
             }
         }
 
-        public Cuenta(string numero, TipoCuenta tipo, int monto = 0)
+        public Cuenta(string numero, TipoCuenta tipo, double monto = 0)
         {
             if (!Regex.IsMatch(numero, @"^[0-9]+$"))
             {

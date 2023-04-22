@@ -10,7 +10,7 @@ public interface IATM
 
     public bool Configurado { get; }
 
-    public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, int monto = 0);
+    public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, double monto = 0);
     public void InstalarLlave(byte[] llave);
     public void Reestablecer();
 }
@@ -52,9 +52,9 @@ public class Comando
 
 public class ComandoDispensarEfectivo : Comando
 {
-    public int Monto { get; }
+    public double Monto { get; }
 
-    public ComandoDispensarEfectivo(int monto)
+    public ComandoDispensarEfectivo(double monto)
     {
         Monto = monto;
     }
@@ -116,7 +116,7 @@ public class ATM : IATM
 
     public bool Configurado => tpk != null && Switch != null;
 
-    public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, int monto = 0)
+    public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, double monto = 0)
     {
         if (!Configurado)
             throw new InvalidOperationException("El ATM aún no está configurado correctamente");

@@ -5,9 +5,9 @@ namespace ATMSim;
 public interface IAutorizador
 {
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin);
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, int montoRetiro, byte[] criptogramaPin);
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin);
     public string CrearTarjeta(string bin, string numeroCuenta);
-    public string CrearCuenta(TipoCuenta tipo, int montoDeApertura = 0);
+    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0);
     public string Nombre { get; }
     public void AsignarPin(string numeroTarjeta, string pin);
     public void InstalarLlave(byte[] criptogramaLlaveAutorizador);
@@ -15,9 +15,9 @@ public interface IAutorizador
 
 public class Respuesta
 {
-    public int CodigoRespuesta { get; }
+    public double CodigoRespuesta { get; }
 
-    public Respuesta(int codigoRespuesta)
+    public Respuesta(double codigoRespuesta)
     {
         CodigoRespuesta = codigoRespuesta;
     }
@@ -25,23 +25,24 @@ public class Respuesta
 
 public class RespuestaConsultaDeBalance : Respuesta
 {
-    public int? BalanceActual { get; }
+    public double? BalanceActual { get; }
 
-    public RespuestaConsultaDeBalance(int codigoRespuesta, int? balanceActual = null) : base(codigoRespuesta)
+    public RespuestaConsultaDeBalance(double codigoRespuesta, double? balanceActual = null) : base(codigoRespuesta)
     {
-        BalanceActual = balanceActual;
+        BalanceActual = balanceActual.HasValue ? double.Parse(balanceActual.Value.ToString("F2")) : null;
     }
 }
 
 public class RespuestaRetiro : Respuesta
 {
-    public int? MontoAutorizado { get; }
-    public int? BalanceLuegoDelRetiro { get; }
+    public double? MontoAutorizado { get; }
+    public double? BalanceLuegoDelRetiro { get; }
 
-    public RespuestaRetiro(int codigoRespuesta, int? montoAutorizado = null, int? balanceLuegoDelRetiro = null) : base(
+    public RespuestaRetiro(int codigoRespuesta, double? montoAutorizado = null, double? balanceLuegoDelRetiro = null) : base(
         codigoRespuesta)
     {
-        (MontoAutorizado, BalanceLuegoDelRetiro) = (montoAutorizado, balanceLuegoDelRetiro);
+        MontoAutorizado = montoAutorizado;
+        BalanceLuegoDelRetiro = balanceLuegoDelRetiro.HasValue ? double.Parse(balanceLuegoDelRetiro.Value.ToString("F2")) : null;
     }
 }
 
@@ -84,12 +85,12 @@ public class Autorizador : IAutorizador
 
     private bool TarjetaExiste(string numeroTarjeta)
     {
-        return tarjetas.Where(x => x.Numero == numeroTarjeta).Any();
+        return tarjetas.Any(x => x.Numero == numeroTarjeta);
     }
 
     private Tarjeta ObtenerTarjeta(string numeroTarjeta)
     {
-        return tarjetas.Where(x => x.Numero == numeroTarjeta).Single();
+        return tarjetas.Single(x => x.Numero == numeroTarjeta);
     }
 
     private byte[] ObtenerCriptogramaPinTarjeta(string numeroTarjeta)
@@ -104,12 +105,12 @@ public class Autorizador : IAutorizador
 
     private bool CuentaExiste(string numeroCuenta)
     {
-        return cuentas.Where(x => x.Numero == numeroCuenta).Any();
+        return cuentas.Any(x => x.Numero == numeroCuenta);
     }
 
     private Cuenta ObtenerCuenta(string numeroCuenta)
     {
-        return cuentas.Where(x => x.Numero == numeroCuenta).Single();
+        return cuentas.Single(x => x.Numero == numeroCuenta);
     }
 
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin)
@@ -131,7 +132,7 @@ public class Autorizador : IAutorizador
         return new RespuestaConsultaDeBalance(0, cuenta.Monto); // Autorizado
     }
 
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, int montoRetiro, byte[] criptogramaPin)
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin)
     {
         if (!TarjetaExiste(numeroTarjeta))
             return new RespuestaRetiro(56); // Esta tarjeta no se reconoce
@@ -185,7 +186,7 @@ public class Autorizador : IAutorizador
         return tarjeta.Numero;
     }
 
-    public string CrearCuenta(TipoCuenta tipo, int montoDeApertura = 0)
+    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0)
     {
         string numero;
         do
