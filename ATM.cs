@@ -222,65 +222,67 @@ public class ATM : IATM
         consoleWriter.WriteLine("");
         threadSleeper.Sleep(500);
     }
+
+
     //Substitute Algorithm Refactoring - Equipo 1
 
     #region Substitute Algorithm Refactoring
 
     #region Codigo Antiguo
 
-    //private byte[] Encriptar(string textoPlano)
-    //{
-    //    if (!Configurado)
-    //        throw new InvalidOperationException("El ATM aún no está configurado correctamente");
-
-    //    var llave = tpk.Skip(0).Take(TAMANO_LLAVE).ToArray();
-    //    var iv = tpk.Skip(TAMANO_LLAVE).ToArray();
-    //    using (var llaveAes = Aes.Create())
-    //    {
-    //        llaveAes.Key = llave;
-    //        llaveAes.IV = iv;
-
-    //        var encriptador = llaveAes.CreateEncryptor();
-
-    //        using (var ms = new MemoryStream())
-    //        {
-    //            using (var cs = new CryptoStream(ms, encriptador, CryptoStreamMode.Write))
-    //            {
-    //                using (var sw = new StreamWriter(cs))
-    //                {
-    //                    sw.Write(textoPlano);
-    //                }
-
-    //                return ms.ToArray();
-    //            }
-    //        }
-    //    }
-    //}
-
-    #endregion
-
-    #region Codigo Nuevo   
-
     private byte[] Encriptar(string textoPlano)
     {
         if (!Configurado)
             throw new InvalidOperationException("El ATM aún no está configurado correctamente");
 
-        byte[] llave = tpk.Take(TAMANO_LLAVE).ToArray();
-        byte[] iv = tpk.Skip(TAMANO_LLAVE).ToArray();
+        var llave = tpk.Skip(0).Take(TAMANO_LLAVE).ToArray();
+        var iv = tpk.Skip(TAMANO_LLAVE).ToArray();
+        using (var llaveAes = Aes.Create())
+        {
+            llaveAes.Key = llave;
+            llaveAes.IV = iv;
 
-        using Aes aes = Aes.Create();
-        aes.Key = llave;
-        aes.IV = iv;
+            var encriptador = llaveAes.CreateEncryptor();
 
-        using MemoryStream memoryStream = new MemoryStream();
-        using CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
-        using StreamWriter streamWriter = new StreamWriter(cryptoStream);
+            using (var ms = new MemoryStream())
+            {
+                using (var cs = new CryptoStream(ms, encriptador, CryptoStreamMode.Write))
+                {
+                    using (var sw = new StreamWriter(cs))
+                    {
+                        sw.Write(textoPlano);
+                    }
 
-        streamWriter.Write(textoPlano);
-
-        return memoryStream.ToArray();
+                    return ms.ToArray();
+                }
+            }
+        }
     }
+
+    #endregion
+
+    #region Codigo Nuevo   
+
+    // private byte[] Encriptar(string textoPlano)
+    // {
+    //     if (!Configurado)
+    //         throw new InvalidOperationException("El ATM aún no está configurado correctamente");
+    //
+    //     byte[] llave = tpk.Take(TAMANO_LLAVE).ToArray();
+    //     byte[] iv = tpk.Skip(TAMANO_LLAVE).ToArray();
+    //
+    //     using Aes aes = Aes.Create();
+    //     aes.Key = llave;
+    //     aes.IV = iv;
+    //
+    //     using MemoryStream memoryStream = new MemoryStream();
+    //     using CryptoStream cryptoStream = new CryptoStream(memoryStream, aes.CreateEncryptor(), CryptoStreamMode.Write);
+    //     using StreamWriter streamWriter = new StreamWriter(cryptoStream);
+    //
+    //     streamWriter.Write(textoPlano);
+    //
+    //     return memoryStream.ToArray();
+    // }
 
     #endregion
     #endregion

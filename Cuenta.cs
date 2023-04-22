@@ -15,7 +15,7 @@ namespace ATMSim
     {
         public TipoCuenta Tipo { get; }
         public string Numero { get; }
-
+        public double LimiteSobregiro { get; }
         private double monto;
 
         public double Monto
@@ -32,16 +32,21 @@ namespace ATMSim
             }
         }
 
-        public Cuenta(string numero, TipoCuenta tipo, double monto = 0)
+        public Cuenta(string numero, TipoCuenta tipo, double monto = 0, double limiteSobregiro = 0)
         {
             if (!Regex.IsMatch(numero, @"^[0-9]+$"))
             {
                 throw new ArgumentException("Numero de cuenta inválido");
             }
+            if (limiteSobregiro < 0)
+            {
+                throw new ArgumentException("Solo se permiten cantidades positivas de sobregiro");
+            }
 
             Numero = numero;
             Tipo = tipo;
             Monto = monto;
+            LimiteSobregiro = limiteSobregiro;
         }
     }
 }

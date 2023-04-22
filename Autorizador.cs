@@ -5,10 +5,11 @@ namespace ATMSim;
 public interface IAutorizador
 {
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin);
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin);
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin, int limiteRetiro = 0);
     public string CrearTarjeta(string bin, string numeroCuenta);
-    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0);
+    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0, double montoLimiteSobregiro = 0);
     public string Nombre { get; }
+
     public void AsignarPin(string numeroTarjeta, string pin);
     public void InstalarLlave(byte[] criptogramaLlaveAutorizador);
 }
@@ -37,12 +38,14 @@ public class RespuestaRetiro : Respuesta
 {
     public double? MontoAutorizado { get; }
     public double? BalanceLuegoDelRetiro { get; }
+    public double? LimiteRetiro { get; }
 
-    public RespuestaRetiro(int codigoRespuesta, double? montoAutorizado = null, double? balanceLuegoDelRetiro = null) : base(
+    public RespuestaRetiro(int codigoRespuesta, double? montoAutorizado = null, double? balanceLuegoDelRetiro = null, double limiteRetiro = 0) : base(
         codigoRespuesta)
     {
         MontoAutorizado = montoAutorizado;
         BalanceLuegoDelRetiro = balanceLuegoDelRetiro.HasValue ? double.Parse(balanceLuegoDelRetiro.Value.ToString("F2")) : null;
+        LimiteRetiro = limiteRetiro;
     }
 }
 
@@ -93,6 +96,10 @@ public class Autorizador : IAutorizador
         return tarjetas.Single(x => x.Numero == numeroTarjeta);
     }
 
+    private bool PermitirSobregiro(double montoSobregirado, double limite)
+    {
+        return montoSobregirado < limite;
+    }
     private byte[] ObtenerCriptogramaPinTarjeta(string numeroTarjeta)
     {
         return pinesTarjetas[numeroTarjeta];
@@ -132,7 +139,7 @@ public class Autorizador : IAutorizador
         return new RespuestaConsultaDeBalance(0, cuenta.Monto); // Autorizado
     }
 
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin)
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin, int limiteRetiro = 0)
     {
         if (!TarjetaExiste(numeroTarjeta))
             return new RespuestaRetiro(56); // Esta tarjeta no se reconoce
@@ -154,6 +161,12 @@ public class Autorizador : IAutorizador
         }
 
         cuenta.Monto -= montoRetiro;
+        if (cuenta.Tipo == TipoCuenta.Corriente && PermitirSobregiro(cuenta.Monto, (cuenta.LimiteSobregiro * -1)))
+        {
+            cuenta.Monto += montoRetiro;
+            // No se permite sobregiros
+            return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);
+        }
         return new RespuestaRetiro(0, montoRetiro, cuenta.Monto); // Autorizado
     }
 
@@ -186,7 +199,7 @@ public class Autorizador : IAutorizador
         return tarjeta.Numero;
     }
 
-    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0)
+    public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0, double limiteDeSobregiro = 0)
     {
         string numero;
         do
@@ -195,7 +208,7 @@ public class Autorizador : IAutorizador
             numero = GenerarNumeroAleatorio(tamanoNumeroCuenta, prefijoDeCuenta);
         } while (CuentaExiste(numero));
 
-        var cuenta = new Cuenta(numero, tipo, montoDeApertura);
+        var cuenta = new Cuenta(numero, tipo, montoDeApertura, limiteDeSobregiro);
         cuentas.Add(cuenta);
 
         return cuenta.Numero;

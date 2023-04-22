@@ -258,6 +258,9 @@ namespace ATMSim
                 case 51:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Su cuenta no posee balance suficiente para realizar el retiro", true));
                     break;
+                case 52:
+                    comandos.Add(new ComandoMostrarInfoEnPantalla("Fondos insuficientes. Ha excedido el limite de sobregiro de " + respuesta.LimiteRetiro, true));
+                    break;
                 case 55:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Pin incorrecto", true));
                     break;

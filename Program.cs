@@ -6,8 +6,9 @@
 const string pin = "1234";
 const string pinIncorrecto = "9999";
 const string binTarjeta = "459413";
-
-const TipoCuenta tipoDeCuenta = TipoCuenta.Ahorros;
+const double limiteSobregiro = 5000;
+const double cantidadRetirar = 1000;
+const TipoCuenta tipoDeCuenta = TipoCuenta.Corriente;
 const int balanceInicialCuenta = 20_000;
 
 const string teclasRetiroConRecibo = "AAA";
@@ -44,7 +45,7 @@ static IATM CrearATM(string nombre, IConsoleWriter consoleWriter, IThreadSleeper
 static string CrearCuentaYTarjeta(IAutorizador autorizador, TipoCuenta tipoCuenta, int balanceInicial,
     string binTarjeta, string pin)
 {
-    var numeroCuenta = autorizador.CrearCuenta(tipoCuenta, balanceInicial);
+    var numeroCuenta = autorizador.CrearCuenta(tipoCuenta, balanceInicial, limiteSobregiro);
     var numeroTarjeta = autorizador.CrearTarjeta(binTarjeta, numeroCuenta);
     autorizador.AsignarPin(numeroTarjeta, pin);
     return numeroTarjeta;
@@ -102,11 +103,11 @@ static void SecuenciaDeTransaccionesDeEjemplo(IATM atm, string numeroTarjeta)
     EsperarTeclaEnter("Presione ENTER para realizar una consulta de balance");
     atm.EnviarTransactionRequest(teclasConsultaDeBalance, numeroTarjeta, pin);
 
-    EsperarTeclaEnter("Presione ENTER para realizar un retiro de 12,000 sin impresión de recibo");
-    atm.EnviarTransactionRequest(teclasRetiroSinRecibo, numeroTarjeta, pin, 12_000.56);
+    EsperarTeclaEnter($"Presione ENTER para realizar un retiro de {cantidadRetirar} sin impresión de recibo");
+    atm.EnviarTransactionRequest(teclasRetiroSinRecibo, numeroTarjeta, pin, cantidadRetirar);
 
-    EsperarTeclaEnter("Presione ENTER para realizar un intento retiro de 6,000 pero con pin incorrecto");
-    atm.EnviarTransactionRequest(teclasRetiroConRecibo, numeroTarjeta, pinIncorrecto, 6_000);
+    EsperarTeclaEnter($"Presione ENTER para realizar un intento retiro {cantidadRetirar} pero con pin incorrecto");
+    atm.EnviarTransactionRequest(teclasRetiroConRecibo, numeroTarjeta, pinIncorrecto, cantidadRetirar);
 
     EsperarTeclaEnter("Presione ENTER para realizar una consulta de balance");
     atm.EnviarTransactionRequest(teclasConsultaDeBalance, numeroTarjeta, pin);
