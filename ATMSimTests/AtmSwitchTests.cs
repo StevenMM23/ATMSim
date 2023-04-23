@@ -100,6 +100,36 @@ namespace ATMSimTests
 
 
         }
+        internal class ServicioRuteo
+        {
+            private List<Ruta> tablaRuteo;
+            private Dictionary<string, string> autorizadores;
+
+            public ServicioRuteo(List<Ruta> tablaRuteo, Dictionary<string, string> autorizadores)
+            {
+                this.tablaRuteo = tablaRuteo;
+                this.autorizadores = autorizadores;
+            }
+
+            internal void AgregarRuta(string v1, string v2)
+            {
+                throw new NotImplementedException();
+            }
+        }
+        internal class Servicio
+        {
+            private List<ConfiguracionOpKey> tablaOpKeys;
+
+            public Servicio(List<ConfiguracionOpKey> tablaOpKeys)
+            {
+                this.tablaOpKeys = tablaOpKeys;
+            }
+
+            internal object DeterminarTipoDeTransaccion(string v)
+            {
+                throw new NotImplementedException();
+            }
+        }
 
 
         [Fact]
@@ -129,7 +159,7 @@ namespace ATMSimTests
             // ASSERT
             comandosRespuesta.Should().HaveCountGreaterThanOrEqualTo(1);
             comandosRespuesta.Should().Contain(x => x.GetType() == typeof(ComandoDispensarEfectivo));
-            
+
             ComandoDispensarEfectivo comando = (ComandoDispensarEfectivo)comandosRespuesta
                 .Where(x => x.GetType() == typeof(ComandoDispensarEfectivo)).Single();
             comando.Monto.Should().Be(200);
@@ -158,22 +188,6 @@ namespace ATMSimTests
             Assert.Equal("Autorizador1", tablaRuteo[0].Destino);
         }
 
-        internal class ServicioRuteo
-        {
-            private List<Ruta> tablaRuteo;
-            private Dictionary<string, string> autorizadores;
-
-            public ServicioRuteo(List<Ruta> tablaRuteo, Dictionary<string, string> autorizadores)
-            {
-                this.tablaRuteo = tablaRuteo;
-                this.autorizadores = autorizadores;
-            }
-
-            internal void AgregarRuta(string v1, string v2)
-            {
-                throw new NotImplementedException();
-            }
-        }
 
 
 
@@ -193,20 +207,6 @@ namespace ATMSimTests
             Assert.Throws<SecuenciaDeTeclasNoReconocidas>(() => servicio.DeterminarTipoDeTransaccion("XYZ"));
         }
 
-        internal class Servicio
-        {
-            private List<ConfiguracionOpKey> tablaOpKeys;
-
-            public Servicio(List<ConfiguracionOpKey> tablaOpKeys)
-            {
-                this.tablaOpKeys = tablaOpKeys;
-            }
-
-            internal object DeterminarTipoDeTransaccion(string v)
-            {
-                throw new NotImplementedException();
-            }
-        }
 
 
     }
