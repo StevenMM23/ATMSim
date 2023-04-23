@@ -18,8 +18,7 @@ namespace ATMSimTests.Fakes
 
         public FakeATM(string nombre) => Nombre = nombre;
 
-
-        public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, int monto = 0)
+        public void EnviarTransactionRequest(string opKeyBuffer, string numeroTarjeta, string pin, double monto = 0)
         {
             throw new NotImplementedException();
         }

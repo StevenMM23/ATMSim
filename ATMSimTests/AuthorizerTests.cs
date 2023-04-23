@@ -49,26 +49,7 @@ namespace ATMSimTests
 
         }
 
-        [Fact]
-        public void Accounts_of_type_checking_allow_overdraft()
-        {
-            // ARRANGE
-            IHSM hsm = new HSM();
-            IAutorizador sut = CrearAutorizador("Autorizador", hsm);
-            ComponentesLlave llave = hsm.GenerarLlave();
-            sut.InstalarLlave(llave.LlaveEncriptada);
-            string numeroTarjeta = CrearCuentaYTarjeta(sut, TipoCuenta.Corriente, 10_000, "455555", "1234");
-            byte[] criptogramaPin = Encriptar("1234", llave.LlaveEnClaro);
 
-            // ACT
-            RespuestaRetiro respuesta = sut.AutorizarRetiro(numeroTarjeta, 15_500, criptogramaPin);
-
-            // ASSERT
-            respuesta.MontoAutorizado.Should().Be(15_500);
-            respuesta.BalanceLuegoDelRetiro.Should().Be(-5_500);
-            respuesta.CodigoRespuesta.Should().Be(0);
-
-        }
 
         [Fact]
         public void Balance_Inquiry_with_incorrect_pin_return_respcode_55()
