@@ -71,6 +71,8 @@ public class Autorizador : IAutorizador
 
     private readonly Dictionary<string, byte[]> pinesTarjetas = new();
 
+    private readonly Dictionary<string, string> tarjetaCuenta = new();
+
     private byte[]? criptogramaLlaveAutorizador;
 
     public Autorizador(string nombre, IHSM hsm)
@@ -90,6 +92,18 @@ public class Autorizador : IAutorizador
         var criptogramaPin = hsm.EncriptarPinConLlaveMaestra(pin);
 
         pinesTarjetas[numeroTarjeta] = criptogramaPin;
+    }
+
+    //Asignar tarjeta a cuenta
+    public void AsignarTarjetaCuenta(string numeroTarjeta, string numeroCuenta)
+    {
+        if (!TarjetaExiste(numeroTarjeta))
+            throw new ArgumentException("Número de tarjeta no reconocido");
+
+        if (CuentaExiste(numeroCuenta))
+            throw new ArgumentException("Número de cuenta no reconodo");
+
+        tarjetaCuenta[numeroTarjeta] += numeroCuenta;
     }
 
     private bool TarjetaExiste(string numeroTarjeta)
@@ -127,6 +141,12 @@ public class Autorizador : IAutorizador
         return cuentas.Single(x => x.Numero == numeroCuenta);
     }
 
+    //Obtener el nuemro de cuenta asociado a una tarjeta
+    private string ObtenerNumeroCuenta(string numeroTarjeta)
+    {
+        return tarjetaCuenta[numeroTarjeta];
+    }
+
 
     // Consolidate Conditional Expression and Extract Method Refactoring 
     #region Extract Method and Consolidate Conditional Expression
@@ -137,6 +157,8 @@ public class Autorizador : IAutorizador
     {
         return TarjetaExiste(numeroTarjeta) && TarjetaTienePin(numeroTarjeta);
     }
+
+
 
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin)
     {
