@@ -156,7 +156,7 @@ public class Autorizador : IAutorizador
     }
 
     public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin,
-        int limiteRetiro = 0)
+        int limiteRetiro = 15000)
     {
         if (!TarjetaValida(numeroTarjeta)) return new RespuestaRetiro(!TarjetaExiste(numeroTarjeta) ? 56 : 55);
 
@@ -179,7 +179,13 @@ public class Autorizador : IAutorizador
         if (cuenta.Tipo != TipoCuenta.Corriente || !PermitirSobregiro(cuenta.Monto, cuenta.LimiteSobregiro * -1))
             return new RespuestaRetiro(0, montoRetiro, cuenta.Monto); // Autorizado
         cuenta.Monto += montoRetiro;
-        return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);
+
+        if (montoRetiro > limiteRetiro)
+        {
+            return new RespuestaRetiro(53);
+        }
+
+        return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);         
     }
 
     #endregion
