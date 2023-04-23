@@ -158,6 +158,10 @@ namespace ATMSim
             LlavesDeAtm.Remove(atm.Nombre);
         }
 
+
+        #region Inline Method - Autorizar
+
+        #region Codigo Nuevo 
         public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, double monto, byte[] criptogramaPin)
         {
             ConfiguracionOpKey opKeyConfig;
@@ -172,17 +176,26 @@ namespace ATMSim
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e.ToString());
                 Console.ResetColor();
-                return MostrarErrorGenerico();
+                List<Comando> comandos = new List<Comando>();
+                string texto = "Lo Sentimos. En este momento no podemos procesar su transacción.\n\n" +
+                               "Por favor intente más tarde...";
+                comandos.Add(new ComandoMostrarInfoEnPantalla(texto, true));
+                return comandos;
             }
 
             if (!LlavesDeAtm.ContainsKey(atm.Nombre) || !LlavesDeAutorizador.ContainsKey(autorizador.Nombre))
-                return MostrarErrorGenerico();
+            {
+                List<Comando> comandos = new List<Comando>();
+                string texto = "Lo Sentimos. En este momento no podemos procesar su transacción.\n\n" +
+                               "Por favor intente más tarde...";
+                comandos.Add(new ComandoMostrarInfoEnPantalla(texto, true));
+                return comandos;
+            }
 
             byte[] criptogramaLlaveOrigen = LlavesDeAtm[atm.Nombre];
             byte[] criptogramaLlaveDestino = LlavesDeAutorizador[autorizador.Nombre];
 
             byte[] criptogramaTraducidoPin = hsm.TraducirPin(criptogramaPin, criptogramaLlaveOrigen, criptogramaLlaveDestino);
-
 
             switch (opKeyConfig.TipoTransaccion)
             {
@@ -191,11 +204,61 @@ namespace ATMSim
                 case TipoTransaccion.Consulta:
                     return AutorizarConsulta(atm, numeroTarjeta, criptogramaTraducidoPin, autorizador, opKeyConfig);
                 default:
-                    return MostrarErrorGenerico();
-
+                    List<Comando> comandos = new List<Comando>();
+                    string texto = "Lo Sentimos. En este momento no podemos procesar su transacción.\n\n" +
+                                   "Por favor intente más tarde...";
+                    comandos.Add(new ComandoMostrarInfoEnPantalla(texto, true));
+                    return comandos;
             }
-
         }
+
+
+        #endregion
+
+        #region Codigo Antiguo
+
+        // public List<Comando> Autorizar(IATM atm, string opKeyBuffer, string numeroTarjeta, double monto, byte[] criptogramaPin)
+        // {
+        //     ConfiguracionOpKey opKeyConfig;
+        //     IAutorizador autorizador;
+        //     try
+        //     {
+        //         opKeyConfig = DeterminarTipoDeTransaccion(opKeyBuffer);
+        //         autorizador = DeterminarAutorizadorDestino(numeroTarjeta);
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         Console.ForegroundColor = ConsoleColor.Red;
+        //         Console.WriteLine(e.ToString());
+        //         Console.ResetColor();
+        //         return MostrarErrorGenerico();
+        //     }
+        //
+        //     if (!LlavesDeAtm.ContainsKey(atm.Nombre) || !LlavesDeAutorizador.ContainsKey(autorizador.Nombre))
+        //         return MostrarErrorGenerico();
+        //
+        //     byte[] criptogramaLlaveOrigen = LlavesDeAtm[atm.Nombre];
+        //     byte[] criptogramaLlaveDestino = LlavesDeAutorizador[autorizador.Nombre];
+        //
+        //     byte[] criptogramaTraducidoPin = hsm.TraducirPin(criptogramaPin, criptogramaLlaveOrigen, criptogramaLlaveDestino);
+        //
+        //
+        //     switch (opKeyConfig.TipoTransaccion)
+        //     {
+        //         case TipoTransaccion.Retiro:
+        //             return AutorizarRetiro(atm, numeroTarjeta, monto, criptogramaTraducidoPin, autorizador, opKeyConfig);
+        //         case TipoTransaccion.Consulta:
+        //             return AutorizarConsulta(atm, numeroTarjeta, criptogramaTraducidoPin, autorizador, opKeyConfig);
+        //         default:
+        //             return MostrarErrorGenerico();
+        //
+        //     }
+        //
+        // }
+
+        #endregion
+
+        #endregion
 
         private List<Comando> MostrarErrorGenerico()
         {
