@@ -6,10 +6,25 @@ public class Tarjeta
 {
 
     public string NumeroCuenta { get; }
+    
     public string Numero { get; }
 
+    public static bool Bloqueada { get; set;}
+
+    public void Bloquear()
+    {
+        Bloqueada = true;
+    }
+
+
+    //Implementación de metodo que establece a traves de la propiedad de la Clase tarjeta si esta bloqueada o no
     public Tarjeta(string numero, string numeroCuenta, bool contieneDigitoVerificador = false)
     {
+        if (Bloqueada)
+        {
+            throw new ArgumentException("La tarjeta está bloqueada");
+        }
+
         if (!Regex.Match(numero, @"[0-9]{15,19}").Success)
             throw new ArgumentException("Numero de tarjeta inválido");
 
@@ -29,12 +44,22 @@ public class Tarjeta
 
     public static string EnmascararNumero(string numeroTarjeta)
     {
+        if (Bloqueada)
+        {
+            throw new ArgumentException("La tarjeta está bloqueada");
+        }
+
         return numeroTarjeta[..6] + new string('*', numeroTarjeta.Length - 10) + numeroTarjeta[^4..];
+        
     }
-
-
+    
     public static int CalcularDigitoVerificacion(string numeroSinDigitoVerificador)
     {
+        if (Bloqueada)
+        {
+            throw new ArgumentException("La tarjeta está bloqueada");
+        }
+
         var sum = 0;
         var count = 1;
         for (var n = numeroSinDigitoVerificador.Length - 1; n >= 0; n -= 1)
@@ -54,6 +79,11 @@ public class Tarjeta
 
     public static bool ValidarDigitoVerificador(string numero)
     {
+
+        if (Bloqueada)
+        {
+            throw new ArgumentException("La tarjeta está bloqueada");
+        }
 
         var numeroSinDigitoVerificador = numero[..^1];
 
