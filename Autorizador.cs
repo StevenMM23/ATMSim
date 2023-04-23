@@ -5,7 +5,10 @@ namespace ATMSim;
 public interface IAutorizador
 {
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin);
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin, int limiteRetiro = 0);
+
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin,
+        int limiteRetiro = 0);
+
     public string CrearTarjeta(string bin, string numeroCuenta);
     public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0, double montoLimiteSobregiro = 0);
     public string Nombre { get; }
@@ -40,11 +43,14 @@ public class RespuestaRetiro : Respuesta
     public double? BalanceLuegoDelRetiro { get; }
     public double? LimiteRetiro { get; }
 
-    public RespuestaRetiro(int codigoRespuesta, double? montoAutorizado = null, double? balanceLuegoDelRetiro = null, double limiteRetiro = 0) : base(
+    public RespuestaRetiro(int codigoRespuesta, double? montoAutorizado = null, double? balanceLuegoDelRetiro = null,
+        double limiteRetiro = 0) : base(
         codigoRespuesta)
     {
         MontoAutorizado = montoAutorizado;
-        BalanceLuegoDelRetiro = balanceLuegoDelRetiro.HasValue ? double.Parse(balanceLuegoDelRetiro.Value.ToString("F2")) : null;
+        BalanceLuegoDelRetiro = balanceLuegoDelRetiro.HasValue
+            ? double.Parse(balanceLuegoDelRetiro.Value.ToString("F2"))
+            : null;
         LimiteRetiro = limiteRetiro;
     }
 }
@@ -100,6 +106,7 @@ public class Autorizador : IAutorizador
     {
         return montoSobregirado < limite;
     }
+
     private byte[] ObtenerCriptogramaPinTarjeta(string numeroTarjeta)
     {
         return pinesTarjetas[numeroTarjeta];
@@ -120,17 +127,26 @@ public class Autorizador : IAutorizador
         return cuentas.Single(x => x.Numero == numeroCuenta);
     }
 
+
+    // Consolidate Conditional Expression and Extract Method Refactoring 
+    #region Extract Method and Consolidate Conditional Expression
+
+    #region Codigo Nuevo
+
+    private bool TarjetaValida(string numeroTarjeta)
+    {
+        return TarjetaExiste(numeroTarjeta) && TarjetaTienePin(numeroTarjeta);
+    }
+
     public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin)
     {
-        if (!TarjetaExiste(numeroTarjeta))
-            return new RespuestaConsultaDeBalance(56); // Esta tarjeta no se reconoce
-
-        if (!TarjetaTienePin(numeroTarjeta))
-            return new RespuestaConsultaDeBalance(55); // Esta tarjeta no tiene pin asignado
+        if (!TarjetaValida(numeroTarjeta))
+            return new RespuestaConsultaDeBalance(!TarjetaExiste(numeroTarjeta) ? 56 : 55);
 
         var criptogramaPinReal = ObtenerCriptogramaPinTarjeta(numeroTarjeta);
 
-        if (!hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
+        if (criptogramaLlaveAutorizador != null &&
+            !hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
             return new RespuestaConsultaDeBalance(55); // Pin incorrecto
 
         var tarjeta = ObtenerTarjeta(numeroTarjeta);
@@ -139,42 +155,96 @@ public class Autorizador : IAutorizador
         return new RespuestaConsultaDeBalance(0, cuenta.Monto); // Autorizado
     }
 
-    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin, int limiteRetiro = 0)
+    public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin,
+        int limiteRetiro = 0)
     {
-        if (!TarjetaExiste(numeroTarjeta))
-            return new RespuestaRetiro(56); // Esta tarjeta no se reconoce
-
-        if (!TarjetaTienePin(numeroTarjeta))
-            return new RespuestaRetiro(55); // Esta tarjeta no tiene pin asignado
+        if (!TarjetaValida(numeroTarjeta)) return new RespuestaRetiro(!TarjetaExiste(numeroTarjeta) ? 56 : 55);
 
         var criptogramaPinReal = ObtenerCriptogramaPinTarjeta(numeroTarjeta);
 
-        if (!hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
+        if (criptogramaLlaveAutorizador != null &&
+            !hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
             return new RespuestaRetiro(55); // Pin incorrecto
 
         var tarjeta = ObtenerTarjeta(numeroTarjeta);
         var cuenta = ObtenerCuenta(tarjeta.NumeroCuenta);
 
-        if (cuenta.Tipo == TipoCuenta.Ahorros && cuenta.Monto < montoRetiro)
-        {
-            return new RespuestaRetiro(51); // Fondos Insuficientes
-        }
+        if (cuenta.Tipo == TipoCuenta.Ahorros &&
+            cuenta.Monto < montoRetiro) return new RespuestaRetiro(51); // Fondos Insuficientes
 
-
-        if (tarjeta.Bloqueada)
-        {
-            return new RespuestaRetiro(57); // Su Tarjeta esta bloqueada
-        }
+        if (tarjeta.Bloqueada) return new RespuestaRetiro(57); // Su Tarjeta esta bloqueada
 
         cuenta.Monto -= montoRetiro;
-        if (cuenta.Tipo == TipoCuenta.Corriente && PermitirSobregiro(cuenta.Monto, (cuenta.LimiteSobregiro * -1)))
-        {
-            cuenta.Monto += montoRetiro;
-            // No se permite sobregiros
-            return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);
-        }
-        return new RespuestaRetiro(0, montoRetiro, cuenta.Monto); // Autorizado
+
+        if (cuenta.Tipo != TipoCuenta.Corriente || !PermitirSobregiro(cuenta.Monto, cuenta.LimiteSobregiro * -1))
+            return new RespuestaRetiro(0, montoRetiro, cuenta.Monto); // Autorizado
+        cuenta.Monto += montoRetiro;
+        return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);
     }
+
+    #endregion
+
+    #region Codigo Antiguo
+
+    // public RespuestaConsultaDeBalance ConsultarBalance(string numeroTarjeta, byte[] criptogramaPin)
+    // {
+    //     if (!TarjetaExiste(numeroTarjeta))
+    //         return new RespuestaConsultaDeBalance(56); // Esta tarjeta no se reconoce
+    //
+    //     if (!TarjetaTienePin(numeroTarjeta))
+    //         return new RespuestaConsultaDeBalance(55); // Esta tarjeta no tiene pin asignado
+    //
+    //     var criptogramaPinReal = ObtenerCriptogramaPinTarjeta(numeroTarjeta);
+    //
+    //     if (!hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
+    //         return new RespuestaConsultaDeBalance(55); // Pin incorrecto
+    //
+    //     var tarjeta = ObtenerTarjeta(numeroTarjeta);
+    //     var cuenta = ObtenerCuenta(tarjeta.NumeroCuenta);
+    //
+    //     return new RespuestaConsultaDeBalance(0, cuenta.Monto); // Autorizado
+    // }
+    //
+    //
+    //
+    //
+    // public RespuestaRetiro AutorizarRetiro(string numeroTarjeta, double montoRetiro, byte[] criptogramaPin,
+    //     int limiteRetiro = 0)
+    // {
+    //     if (!TarjetaExiste(numeroTarjeta))
+    //         return new RespuestaRetiro(56); // Esta tarjeta no se reconoce
+    //
+    //     if (!TarjetaTienePin(numeroTarjeta))
+    //         return new RespuestaRetiro(55); // Esta tarjeta no tiene pin asignado
+    //
+    //     var criptogramaPinReal = ObtenerCriptogramaPinTarjeta(numeroTarjeta);
+    //
+    //     if (!hsm.ValidarPin(criptogramaPin, criptogramaLlaveAutorizador, criptogramaPinReal))
+    //         return new RespuestaRetiro(55); // Pin incorrecto
+    //
+    //     var tarjeta = ObtenerTarjeta(numeroTarjeta);
+    //     var cuenta = ObtenerCuenta(tarjeta.NumeroCuenta);
+    //
+    //     if (cuenta.Tipo == TipoCuenta.Ahorros &&
+    //         cuenta.Monto < montoRetiro) return new RespuestaRetiro(51); // Fondos Insuficientes
+    //
+    //
+    //     if (tarjeta.Bloqueada) return new RespuestaRetiro(57); // Su Tarjeta esta bloqueada
+    //
+    //     cuenta.Monto -= montoRetiro;
+    //     if (cuenta.Tipo == TipoCuenta.Corriente && PermitirSobregiro(cuenta.Monto, cuenta.LimiteSobregiro * -1))
+    //     {
+    //         cuenta.Monto += montoRetiro;
+    //         // No se permite sobregiros
+    //         return new RespuestaRetiro(52, montoRetiro, cuenta.Monto, cuenta.LimiteSobregiro);
+    //     }
+    //
+    //     return new RespuestaRetiro(0, montoRetiro, cuenta.Monto); // Autorizado
+    // }
+
+    #endregion
+
+    #endregion
 
     public void InstalarLlave(byte[] criptogramaLlaveAutorizador)
     {
