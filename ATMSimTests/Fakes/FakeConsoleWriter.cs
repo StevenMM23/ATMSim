@@ -23,15 +23,15 @@ namespace ATMSimTests.Fakes
         public ConsoleColor backgroundColor;
 
 
-        public ConsoleColor ForegroundColor 
-        { 
-            get => foregroundColor; 
-            set 
-            { 
+        public ConsoleColor ForegroundColor
+        {
+            get => foregroundColor;
+            set
+            {
                 foregroundColor = value;
                 consoleTextWithColorInfo += "[FG=" + value.ToString() + "]";
                 changeForegroundColorCount++;
-            } 
+            }
         }
 
         public ConsoleColor BackgroundColor
@@ -46,8 +46,20 @@ namespace ATMSimTests.Fakes
         }
 
 
+        public void WriteLine(double text)
+        {
+            consoleText += text.ToString() + "\n";
+            consoleTextWithColorInfo += text.ToString() + "\n";
+            writeLineCount++;
+        }
+        public void Write(double text)
+        {
+            consoleText += text.ToString();
+            consoleTextWithColorInfo += text.ToString();
+            writeCount++;
+        }
         public void ResetColor()
-        { 
+        {
             resetColorCount++;
             consoleTextWithColorInfo += "[RESET]";
         }
@@ -59,12 +71,9 @@ namespace ATMSimTests.Fakes
             writeCount++;
         }
 
-        public void Write(int text)
-        {
-            consoleText += text.ToString();
-            consoleTextWithColorInfo += text.ToString();
-            writeCount++;
-        }
+
+
+
 
         public void WriteLine(string text)
         {
@@ -73,11 +82,6 @@ namespace ATMSimTests.Fakes
             writeLineCount++;
         }
 
-        public void WriteLine(int text)
-        {
-            consoleText += text.ToString() + "\n";
-            consoleTextWithColorInfo += text.ToString() + "\n";
-            writeLineCount++;
-        }
+
     }
 }
