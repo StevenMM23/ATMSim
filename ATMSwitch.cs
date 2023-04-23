@@ -267,6 +267,9 @@ namespace ATMSim
                 case 56:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Tarjeta no reconocida", true));
                     break;
+                case 57:
+                    comandos.Add(new ComandoMostrarInfoEnPantalla("Su tarjeta esta bloqueada"));
+                    break;
                 default:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Su transacción no puede ser procesada. Por favor intente más tarde.", true));
                     break;
@@ -376,8 +379,8 @@ namespace ATMSim
         {
             try
             {
-                return tablaOpKeys.Where(x => x.Teclas == opKeyBuffer)
-                                  .Single();
+                return tablaOpKeys
+                    .Single(x => x.Teclas == opKeyBuffer);
             }
             catch (InvalidOperationException e) // si no se encuentra ninguna
             {

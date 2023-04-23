@@ -106,6 +106,8 @@ static void SecuenciaDeTransaccionesDeEjemplo(IATM atm, string numeroTarjeta)
     EsperarTeclaEnter($"Presione ENTER para realizar un retiro de {cantidadRetirar} sin impresión de recibo");
     atm.EnviarTransactionRequest(teclasRetiroSinRecibo, numeroTarjeta, pin, cantidadRetirar);
 
+
+
     EsperarTeclaEnter($"Presione ENTER para realizar un intento retiro {cantidadRetirar} pero con pin incorrecto");
     atm.EnviarTransactionRequest(teclasRetiroConRecibo, numeroTarjeta, pinIncorrecto, cantidadRetirar);
 

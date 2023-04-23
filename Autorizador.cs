@@ -160,6 +160,12 @@ public class Autorizador : IAutorizador
             return new RespuestaRetiro(51); // Fondos Insuficientes
         }
 
+
+        if (tarjeta.Bloqueada)
+        {
+            return new RespuestaRetiro(57); // Su Tarjeta esta bloqueada
+        }
+
         cuenta.Monto -= montoRetiro;
         if (cuenta.Tipo == TipoCuenta.Corriente && PermitirSobregiro(cuenta.Monto, (cuenta.LimiteSobregiro * -1)))
         {
@@ -183,7 +189,7 @@ public class Autorizador : IAutorizador
         if (bin[0] != '4')
             throw new NotImplementedException("Sólo se soportan tarjertas VISA, que inician con 4");
 
-        if (!cuentas.Where(x => x.Numero == numeroCuenta).Any())
+        if (cuentas.All(x => x.Numero != numeroCuenta))
             throw new NotImplementedException("Número de cuenta no encontrado");
 
         string numeroSinDigitoVerificador;
@@ -191,7 +197,7 @@ public class Autorizador : IAutorizador
         {
             // repetir hasta encontrar un número único (sin tomar en cuenta el digito verificador)
             numeroSinDigitoVerificador = GenerarNumeroAleatorio(tamanoNumeroTarjeta - 1, bin);
-        } while (tarjetas.Where(x => x.Numero[..^1] == numeroSinDigitoVerificador).Any());
+        } while (tarjetas.Any(x => x.Numero[..^1] == numeroSinDigitoVerificador));
 
         var tarjeta = new Tarjeta(numeroSinDigitoVerificador, numeroCuenta);
         tarjetas.Add(tarjeta);
