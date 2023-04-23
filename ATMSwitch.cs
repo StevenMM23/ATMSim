@@ -401,23 +401,70 @@ namespace ATMSim
             }
         }
 
+        // Extract Method - Agregar Ruta 
+
+        #region Extract Method - Agregar Ruta
+
+        #region Codigo Anterior
+
+        // public void AgregarRuta(string bin, string nombreAutorizador)
+        // {
+        //     if (!Autorizadores.ContainsKey(nombreAutorizador))
+        //         throw new EntidadNoRegistradaException($"El Autorizador {nombreAutorizador} no se encuentra registrado");
+        //
+        //     // Si existe una ruta con el mismo bin, reemplazar destino
+        //     var rutaExistentes = tablaRuteo.Where(x => x.Bin == bin);
+        //     if (rutaExistentes.Any())
+        //     {
+        //         Ruta rutaExistente = rutaExistentes.Single();
+        //         rutaExistente.Destino = "nombreAutorizador";
+        //     }
+        //     else
+        //         // Si no existe el bin en la tabla de bines, agregarlo
+        //         tablaRuteo.Add(new Ruta { Bin = bin, Destino = nombreAutorizador });
+        //
+        // }
+
+        #endregion
+
+        #region Codigo Nuevo
+
         public void AgregarRuta(string bin, string nombreAutorizador)
         {
-            if (!Autorizadores.ContainsKey(nombreAutorizador))
-                throw new EntidadNoRegistradaException($"El Autorizador {nombreAutorizador} no se encuentra registrado");
+            ValidarAutorizador(nombreAutorizador);
 
-            // Si existe una ruta con el mismo bin, reemplazar destino
             var rutaExistentes = tablaRuteo.Where(x => x.Bin == bin);
             if (rutaExistentes.Any())
             {
-                Ruta rutaExistente = rutaExistentes.Single();
-                rutaExistente.Destino = "nombreAutorizador";
+                ActualizarRutaExistente(nombreAutorizador, rutaExistentes.Single());
             }
             else
-                // Si no existe el bin en la tabla de bines, agregarlo
-                tablaRuteo.Add(new Ruta { Bin = bin, Destino = nombreAutorizador });
-
+            {
+                AgregarNuevaRuta(bin, nombreAutorizador);
+            }
         }
+
+        private void ValidarAutorizador(string nombreAutorizador)
+        {
+            if (!Autorizadores.ContainsKey(nombreAutorizador))
+                throw new EntidadNoRegistradaException($"El Autorizador {nombreAutorizador} no se encuentra registrado");
+        }
+
+        private void ActualizarRutaExistente(string nombreAutorizador, Ruta rutaExistente)
+        {
+            rutaExistente.Destino = nombreAutorizador;
+        }
+
+        private void AgregarNuevaRuta(string bin, string nombreAutorizador)
+        {
+            tablaRuteo.Add(new Ruta { Bin = bin, Destino = nombreAutorizador });
+        }
+
+
+        #endregion
+
+        #endregion
+
 
     }
 }
