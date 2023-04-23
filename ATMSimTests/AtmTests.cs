@@ -11,8 +11,11 @@ namespace ATMSimTests
         const string teclasRetiroSinRecibo = "AAC";
         const string teclasConsultaDeBalance = "B";
 
+        //Utilizando el Factory Method en Vez del anterior
+        // Ahora utiliza ATMFactory e invoca el metodo CrearATM
+
         private static IATM CrearATM(string nombre, IConsoleWriter consoleWriter, IThreadSleeper threadSleeper)
-            => new ATM(nombre, consoleWriter, threadSleeper);
+            => new ATMFactory(consoleWriter, threadSleeper).CrearATM(nombre);
 
         private static string CrearCuentaYTarjeta(IAutorizador autorizador, TipoCuenta tipoCuenta, int balanceInicial, string binTarjeta, string pin)
         {
