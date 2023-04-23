@@ -158,7 +158,7 @@ namespace ATMSim
             LlavesDeAtm.Remove(atm.Nombre);
         }
 
-
+        //Inline Method - Autorizar
         #region Inline Method - Autorizar
 
         #region Codigo Nuevo 
@@ -255,19 +255,25 @@ namespace ATMSim
         //     }
         //
         // }
+        // private List<Comando> MostrarErrorGenerico()
+        // {
+        //     List<Comando> comandos = new List<Comando>();
+        //     string texto = "Lo Sentimos. En este momento no podemos procesar su transacción.\n\n" +
+        //                    "Por favor intente más tarde...";
+        //     comandos.Add(new ComandoMostrarInfoEnPantalla(texto, true));
+        //     return comandos;
+        // }
+
 
         #endregion
 
         #endregion
 
-        private List<Comando> MostrarErrorGenerico()
-        {
-            List<Comando> comandos = new List<Comando>();
-            string texto = "Lo Sentimos. En este momento no podemos procesar su transacción.\n\n" +
-                           "Por favor intente más tarde...";
-            comandos.Add(new ComandoMostrarInfoEnPantalla(texto, true));
-            return comandos;
-        }
+
+        //Extract Method - Switch Case - Autorizar Retiro
+        #region Extract Method - AutorizarRetiro
+
+        #region Codigo Nuevo
 
         private List<Comando> AutorizarRetiro(IATM atm, string numeroTarjeta, double monto, byte[] criptogramaPin, IAutorizador autorizador, ConfiguracionOpKey opKeyConfig)
         {
@@ -299,6 +305,14 @@ namespace ATMSim
 
             RespuestaRetiro respuesta = autorizador.AutorizarRetiro(numeroTarjeta, monto, criptogramaPin);
 
+            comandos = ObtenerComandosParaRespuestaRetiro(respuesta, atm, opKeyConfig);
+
+            return comandos;
+        }
+        private List<Comando> ObtenerComandosParaRespuestaRetiro(RespuestaRetiro respuesta, IATM atm, ConfiguracionOpKey opKeyConfig)
+        {
+            List<Comando> comandos = new List<Comando>();
+
             switch (respuesta.CodigoRespuesta)
             {
                 case 0:
@@ -326,6 +340,73 @@ namespace ATMSim
 
             return comandos;
         }
+        #endregion
+
+        #region Codigo Antiguo
+
+        // private List<Comando> AutorizarRetiro(IATM atm, string numeroTarjeta, double monto, byte[] criptogramaPin, IAutorizador autorizador, ConfiguracionOpKey opKeyConfig)
+        // {
+        //     List<Comando> comandos = new List<Comando>();
+        //
+        //     decimal montoDecimal;
+        //     if (!decimal.TryParse(monto.ToString(CultureInfo.InvariantCulture), out montoDecimal))
+        //     {
+        //         comandos.Add(new ComandoMostrarInfoEnPantalla("Monto inválido para retiro", true));
+        //         return comandos;
+        //     }
+        //
+        //     decimal montoRedondeado = decimal.Round(montoDecimal, 2);
+        //     if (montoDecimal != montoRedondeado)
+        //     {
+        //         comandos.Add(new ComandoMostrarInfoEnPantalla("El monto debe tener solo dos decimales", true));
+        //         return comandos;
+        //     }
+        //
+        //     monto = Convert.ToDouble(montoRedondeado);
+        //
+        //     monto = monto == 0 ? opKeyConfig.Monto ?? 0 : monto;
+        //
+        //     if (monto == 0)
+        //     {
+        //         comandos.Add(new ComandoMostrarInfoEnPantalla("Monto inválido para retiro", true));
+        //         return comandos;
+        //     }
+        //
+        //     RespuestaRetiro respuesta = autorizador.AutorizarRetiro(numeroTarjeta, monto, criptogramaPin);
+        //
+        //     switch (respuesta.CodigoRespuesta)
+        //     {
+        //         case 0:
+        //             comandos = ObtenerComandosParaRetiroExitoso(atm, respuesta.MontoAutorizado, opKeyConfig.Recibo, respuesta);
+        //             break;
+        //         case 51:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Su cuenta no posee balance suficiente para realizar el retiro", true));
+        //             break;
+        //         case 52:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Fondos insuficientes. Ha excedido el limite de sobregiro de " + respuesta.LimiteRetiro, true));
+        //             break;
+        //         case 55:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Pin incorrecto", true));
+        //             break;
+        //         case 56:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Tarjeta no reconocida", true));
+        //             break;
+        //         case 57:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Su tarjeta esta bloqueada"));
+        //             break;
+        //         default:
+        //             comandos.Add(new ComandoMostrarInfoEnPantalla("Su transacción no puede ser procesada. Por favor intente más tarde.", true));
+        //             break;
+        //     }
+        //
+        //     return comandos;
+        // }
+        //
+
+        #endregion
+
+        #endregion
+
 
         //Extract Method
         #region Extract Method ObtenerComandosParaRetiroExitoso
@@ -379,7 +460,7 @@ namespace ATMSim
             return comandos;
         }
 
-        //Substitute Algorithm Refactoring - Equipo 1
+        //Substitute Algorithm Refactoring 
 
         #region Substitute Algorithm Refactoring
 
