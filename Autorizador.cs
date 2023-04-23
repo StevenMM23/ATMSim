@@ -251,16 +251,19 @@ public class Autorizador : IAutorizador
         this.criptogramaLlaveAutorizador = criptogramaLlaveAutorizador;
     }
 
+    //Extract Method - ValidarBin, ValidarCuenta, ValidarPrefijoSufijo
+    #region Extract Method
+
+    #region Codigo Nuevo
+
     public string CrearTarjeta(string bin, string numeroCuenta)
     {
-        if (!Regex.Match(bin, @"[0-9]{6}").Success)
-            throw new ArgumentException("El Bin debe ser numérico, de 6 dígitos");
-
-        if (bin[0] != '4')
-            throw new NotImplementedException("Sólo se soportan tarjertas VISA, que inician con 4");
+        ValidarBin(bin);
 
         if (cuentas.All(x => x.Numero != numeroCuenta))
             throw new NotImplementedException("Número de cuenta no encontrado");
+
+        ValidarNumeroCuenta(numeroCuenta);
 
         string numeroSinDigitoVerificador;
         do
@@ -294,8 +297,7 @@ public class Autorizador : IAutorizador
     {
         const string digitos = "0123456789";
 
-        if (!Regex.Match(prefijo + sufijo, @"[0-9]+").Success)
-            throw new ArgumentException("El Sufijo y el Prefijo deben ser caracteres numéricos");
+        ValidarPrefijoSufijo(prefijo, sufijo);
 
         if (cantidadPosiciones <= prefijo.Length + sufijo.Length)
             throw new ArgumentException("Debe haber al menos una posición que no sean parte del prefijo/sufijo");
@@ -306,4 +308,90 @@ public class Autorizador : IAutorizador
             .ToArray());
         return prefijo + numero + sufijo;
     }
+
+    private void ValidarBin(string bin)
+    {
+        if (!Regex.Match(bin, @"[0-9]{6}").Success)
+            throw new ArgumentException("El Bin debe ser numérico, de 6 dígitos");
+
+        if (bin[0] != '4')
+            throw new NotImplementedException("Sólo se soportan tarjertas VISA, que inician con 4");
+    }
+
+    private void ValidarNumeroCuenta(string numeroCuenta)
+    {
+        if (string.IsNullOrWhiteSpace(numeroCuenta))
+            throw new ArgumentException("El número de cuenta no puede estar vacío");
+
+        if (!Regex.IsMatch(numeroCuenta, "^[0-9]+$"))
+            throw new ArgumentException("El número de cuenta debe contener sólo caracteres numéricos");
+    }
+    private void ValidarPrefijoSufijo(string prefijo, string sufijo)
+    {
+        if (!Regex.Match(prefijo + sufijo, @"[0-9]+").Success)
+            throw new ArgumentException("El Sufijo y el Prefijo deben ser caracteres numéricos");
+    }
+    #endregion
+
+    #region Codigo Antiguo
+
+    // public string CrearTarjeta(string bin, string numeroCuenta)
+    // {
+    //     if (!Regex.Match(bin, @"[0-9]{6}").Success)
+    //         throw new ArgumentException("El Bin debe ser numérico, de 6 dígitos");
+    //
+    //     if (bin[0] != '4')
+    //         throw new NotImplementedException("Sólo se soportan tarjertas VISA, que inician con 4");
+    //
+    //     if (cuentas.All(x => x.Numero != numeroCuenta))
+    //         throw new NotImplementedException("Número de cuenta no encontrado");
+    //
+    //     string numeroSinDigitoVerificador;
+    //     do
+    //     {
+    //         // repetir hasta encontrar un número único (sin tomar en cuenta el digito verificador)
+    //         numeroSinDigitoVerificador = GenerarNumeroAleatorio(tamanoNumeroTarjeta - 1, bin);
+    //     } while (tarjetas.Any(x => x.Numero[..^1] == numeroSinDigitoVerificador));
+    //
+    //     var tarjeta = new Tarjeta(numeroSinDigitoVerificador, numeroCuenta);
+    //     tarjetas.Add(tarjeta);
+    //
+    //     return tarjeta.Numero;
+    // }
+    //
+    // public string CrearCuenta(TipoCuenta tipo, double montoDeApertura = 0, double limiteDeSobregiro = 0)
+    // {
+    //     string numero;
+    //     do
+    //     {
+    //         // repetir hasta encontrar un número único
+    //         numero = GenerarNumeroAleatorio(tamanoNumeroCuenta, prefijoDeCuenta);
+    //     } while (CuentaExiste(numero));
+    //
+    //     var cuenta = new Cuenta(numero, tipo, montoDeApertura, limiteDeSobregiro);
+    //     cuentas.Add(cuenta);
+    //
+    //     return cuenta.Numero;
+    // }
+    //
+    // private string GenerarNumeroAleatorio(int cantidadPosiciones, string prefijo = "", string sufijo = "")
+    // {
+    //     const string digitos = "0123456789";
+    //
+    //     if (!Regex.Match(prefijo + sufijo, @"[0-9]+").Success)
+    //         throw new ArgumentException("El Sufijo y el Prefijo deben ser caracteres numéricos");
+    //
+    //     if (cantidadPosiciones <= prefijo.Length + sufijo.Length)
+    //         throw new ArgumentException("Debe haber al menos una posición que no sean parte del prefijo/sufijo");
+    //
+    //     // Arreglar el length
+    //     var numero = new string(Enumerable.Repeat(digitos, cantidadPosiciones - prefijo.Length - sufijo.Length)
+    //         .Select(s => s[random.Next(s.Length)])
+    //         .ToArray());
+    //     return prefijo + numero + sufijo;
+    // }
+
+    #endregion
+
+    #endregion
 }
