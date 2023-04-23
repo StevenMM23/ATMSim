@@ -42,10 +42,6 @@ public class ATMFactory : IATMFactory
 
 #endregion
 
-public class ATMNoEstaRegistradoException : Exception
-{
-}
-
 public class Comando
 {
 }
@@ -83,15 +79,6 @@ public class ComandoMostrarInfoEnPantalla : Comando
 
 public class ComandoDevolverTarjeta : Comando
 {
-}
-public class Transaccion
-{
-    public List<Comando> Comandos { get; } = new List<Comando>();
-
-    public void AgregarComando(Comando comando)
-    {
-        Comandos.Add(comando);
-    }
 }
 
 public class ATM : IATM
