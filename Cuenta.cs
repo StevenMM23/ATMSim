@@ -1,45 +1,52 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace ATMSim
 {
     public class IntentoSobregiroCuentaDeAhorrosException : Exception { }
+
     public enum TipoCuenta
     {
         Ahorros,
         Corriente
     }
 
-    internal class Cuenta
+    public class Cuenta
     {
-        public TipoCuenta Tipo { get; private set; }
-        public string Numero { get; private set; }
+        public TipoCuenta Tipo { get; }
+        public string Numero { get; }
+        public double LimiteSobregiro { get; }
+        private double monto;
 
-        int monto = 0;
-        public int Monto { 
-            get { return monto; } 
-            set 
+        public double Monto
+        {
+            get => monto;
+            set
             {
                 if (Tipo == TipoCuenta.Ahorros && value < 0)
+                {
                     throw new IntentoSobregiroCuentaDeAhorrosException();
-                else
-                    monto = value;
-            } 
+                }
+
+                monto = value;
+            }
         }
 
-        public Cuenta(string numero, TipoCuenta tipo, int monto = 0) 
+        public Cuenta(string numero, TipoCuenta tipo, double monto = 0, double limiteSobregiro = 0)
         {
-            if (!Regex.Match(numero, @"[0-9]+").Success)
+            if (!Regex.IsMatch(numero, @"^[0-9]+$"))
+            {
                 throw new ArgumentException("Numero de cuenta inválido");
+            }
+            if (limiteSobregiro < 0)
+            {
+                throw new ArgumentException("Solo se permiten cantidades positivas de sobregiro");
+            }
 
             Numero = numero;
             Tipo = tipo;
             Monto = monto;
+            LimiteSobregiro = limiteSobregiro;
         }
-        
     }
 }

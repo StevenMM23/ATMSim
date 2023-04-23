@@ -9,12 +9,12 @@ namespace ATMSim
     public interface IConsoleWriter
     {
         public void Write(string text);
-        public void Write(int text);
+        public void Write(double text);
         public void WriteLine(string text);
-        public void WriteLine(int text);
+        public void WriteLine(double text);
         public void ResetColor();
 
-        public ConsoleColor ForegroundColor { get; set;}
+        public ConsoleColor ForegroundColor { get; set; }
         public ConsoleColor BackgroundColor { get; set; }
     }
 
@@ -34,7 +34,7 @@ namespace ATMSim
             Console.Write(text);
         }
 
-        public void Write(int text)
+        public void Write(double text)
         {
             Console.Write(text);
         }
@@ -44,7 +44,7 @@ namespace ATMSim
             Console.WriteLine(text);
         }
 
-        public void WriteLine(int text)
+        public void WriteLine(double text)
         {
             Console.WriteLine(text);
         }

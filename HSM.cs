@@ -9,11 +9,13 @@ namespace ATMSim
 {
     public struct ComponentesLlave
     {
-        public byte[] LlaveEnClaro {  get; private set; }
+        public byte[] LlaveEnClaro { get; private set; }
         public byte[] LlaveEncriptada { get; private set; }
-        public ComponentesLlave(byte[] llaveEnClaro, byte[] llaveEncriptada) 
+
+        public ComponentesLlave(byte[] llaveEnClaro, byte[] llaveEncriptada)
             => (LlaveEnClaro, LlaveEncriptada) = (llaveEnClaro, llaveEncriptada);
     }
+
 
     public interface IHSM
     {
@@ -25,10 +27,10 @@ namespace ATMSim
         public bool ValidarPin(byte[] criptogramaPinAValidar, byte[] criptogramaLlave, byte[] criptogramaPinCorrecto);
 
     }
-    public class HSM: IHSM
+    public class HSM : IHSM
     {
         private const int TAMANO_LLAVE = 32; // bytes
-
+        private readonly LlaveMaestra _llaveMaestra = new();
         private Aes lmk; // llave maestra (Local Master Key)
         public HSM()
         {
@@ -39,7 +41,7 @@ namespace ATMSim
         {
             Aes llaveAes = Aes.Create();
             byte[] llaveIv = CombinarLlaveConIV(llaveAes.Key, llaveAes.IV);
-            byte[] criptogramaLlaveIv = EncriptarLlave(llaveIv);
+            byte[] criptogramaLlaveIv = _llaveMaestra.EncriptarLlave(llaveIv);
 
 
             return new ComponentesLlave(llaveIv, criptogramaLlaveIv);
@@ -48,9 +50,9 @@ namespace ATMSim
 
         public byte[] TraducirPin(byte[] criptograma, byte[] criptogramaLlaveOrigen, byte[] criptogramaLlaveDestino)
         {
-            byte[] llaveOrigenIv = DesencriptarLlave(criptogramaLlaveOrigen);
+            byte[] llaveOrigenIv = _llaveMaestra.DesencriptarLlave(criptogramaLlaveOrigen);
 
-            byte[] llaveDestinoIv = DesencriptarLlave(criptogramaLlaveDestino);
+            byte[] llaveDestinoIv = _llaveMaestra.DesencriptarLlave(criptogramaLlaveDestino);
 
             string textoPlano = DesencriptarDato(criptograma, llaveOrigenIv);
             byte[] nuevoCriptograma = EncriptarDato(textoPlano, llaveDestinoIv);
@@ -65,7 +67,7 @@ namespace ATMSim
 
         public bool ValidarPin(byte[] criptogramaPinAValidar, byte[] criptogramaLlaveAutorizador, byte[] criptogramaPinCorrecto)
         {
-            byte[] llaveAutorizador = DesencriptarLlave(criptogramaLlaveAutorizador);
+            byte[] llaveAutorizador = _llaveMaestra.DesencriptarLlave(criptogramaLlaveAutorizador);
 
             string pinCorrecto = DesencriptarDato(criptogramaPinCorrecto, this.lmk);
             string pinAValidar = DesencriptarDato(criptogramaPinAValidar, llaveAutorizador);
@@ -77,57 +79,6 @@ namespace ATMSim
         private byte[] ExtraerLlave(byte[] llaveIv) => llaveIv.Skip(0).Take(TAMANO_LLAVE).ToArray();
         private byte[] ExtraerIV(byte[] llaveIv) => llaveIv.Skip(TAMANO_LLAVE).ToArray();
 
-
-        private byte[] EncriptarLlave(byte[] llaveIv)
-        {
-            var llave = lmk.Key;
-            var iv = lmk.IV;
-            Aes aes = Aes.Create();
-            aes.Key = llave;
-            aes.IV = iv;
-            aes.Padding = PaddingMode.None;
-            ICryptoTransform encriptador = aes.CreateEncryptor();
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (CryptoStream cs = new CryptoStream(ms, encriptador, CryptoStreamMode.Write))
-                {
-                    cs.Write(llaveIv);
-                    var llaveEncriptada = ms.ToArray();
-                    return llaveEncriptada;
-                }
-            }
-        }
-
-
-        private byte[] DesencriptarLlave(byte[] criptogramaLlaveIv)
-        {
-            var llave = lmk.Key;
-            var iv = lmk.IV;
-            Aes aes = Aes.Create();
-            aes.Key = llave;
-            aes.IV = iv;
-            aes.Padding = PaddingMode.None;
-            ICryptoTransform desencriptador = aes.CreateDecryptor();
-
-            using (MemoryStream ms = new MemoryStream(criptogramaLlaveIv))
-            {
-                using (CryptoStream cs = new CryptoStream(ms, desencriptador, CryptoStreamMode.Read))
-                {
-                    var desencriptado = new byte[criptogramaLlaveIv.Length];
-                    int totalBytesLeidos = 0;
-                    while (totalBytesLeidos < criptogramaLlaveIv.Length)
-                    {
-                        int bytesLeidos = cs.Read(desencriptado, 0, criptogramaLlaveIv.Length);
-                        if (bytesLeidos == 0) break;
-                        totalBytesLeidos += bytesLeidos;
-                    }
-                    
-                    var llaveEnClaro = desencriptado.Take(totalBytesLeidos).ToArray();
-                    return llaveEnClaro;
-                }
-            }
-        }
 
         private byte[] EncriptarDato(string textoPlano, byte[] llaveIv)
         {
