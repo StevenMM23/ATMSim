@@ -234,26 +234,12 @@ namespace ATMSim
                 return comandos;
             }
 
-
             RespuestaRetiro respuesta = autorizador.AutorizarRetiro(numeroTarjeta, monto, criptogramaPin);
-
 
             switch (respuesta.CodigoRespuesta)
             {
                 case 0:
-                    comandos.Add(new ComandoMostrarInfoEnPantalla("Espere mientras se dispensa su dinero", false));
-                    comandos.Add(new ComandoDispensarEfectivo(respuesta.MontoAutorizado ?? 0));
-                    comandos.Add(new ComandoMostrarInfoEnPantalla("Favor de retirar su tarjeta", false));
-                    comandos.Add(new ComandoDevolverTarjeta());
-                    if (opKeyConfig.Recibo)
-                    {
-                        comandos.Add(new ComandoMostrarInfoEnPantalla("Imprimiento su recibo", false));
-
-                        comandos.Add(new ComandoImprimirRecibo($"Fecha: {DateTime.Today: g}\n" +
-                                                               $"ATM: {atm.Nombre}\n" +
-                                                               $"Monto Retirado: {respuesta.MontoAutorizado}\n" +
-                                                               $"Balance Actual: {respuesta.BalanceLuegoDelRetiro}"));
-                    }
+                    comandos = ObtenerComandosParaRetiroExitoso(atm, respuesta.MontoAutorizado, opKeyConfig.Recibo, respuesta);
                     break;
                 case 51:
                     comandos.Add(new ComandoMostrarInfoEnPantalla("Su cuenta no posee balance suficiente para realizar el retiro", true));
@@ -277,6 +263,33 @@ namespace ATMSim
 
             return comandos;
         }
+
+        //Extract Method
+        #region Extract Method ObtenerComandosParaRetiroExitoso
+
+        private List<Comando> ObtenerComandosParaRetiroExitoso(IATM atm, double? montoAutorizado, bool imprimirRecibo, RespuestaRetiro respuesta)
+        {
+            var comandos = new List<Comando>
+            {
+                new ComandoMostrarInfoEnPantalla("Espere mientras se dispensa su dinero"),
+                new ComandoDispensarEfectivo(Convert.ToDouble(montoAutorizado)),
+                new ComandoMostrarInfoEnPantalla("Favor de retirar su tarjeta"),
+                new ComandoDevolverTarjeta()
+            };
+
+            if (!imprimirRecibo) return comandos;
+            comandos.Add(new ComandoMostrarInfoEnPantalla("Imprimiendo su recibo"));
+
+            var mensajeRecibo = $"Fecha: {DateTime.Today: g}\n" +
+                                $"ATM: {atm.Nombre}\n" +
+                                $"Monto Retirado: {montoAutorizado}\n" +
+                                $"Balance Actual: {respuesta.BalanceLuegoDelRetiro}";
+            comandos.Add(new ComandoImprimirRecibo(mensajeRecibo));
+
+            return comandos;
+        }
+
+        #endregion
 
         private List<Comando> AutorizarConsulta(IATM atm, string numeroTarjeta, byte[] criptogramaPin, IAutorizador autorizador, ConfiguracionOpKey opKeyConfig)
         {

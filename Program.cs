@@ -8,8 +8,8 @@ const string pinIncorrecto = "9999";
 const string binTarjeta = "459413";
 const double limiteSobregiro = 5000;
 const double cantidadRetirar = 1000;
-const TipoCuenta tipoDeCuenta = TipoCuenta.Corriente;
-const int balanceInicialCuenta = 20_000;
+const TipoCuenta tipoDeCuenta = TipoCuenta.Ahorros;
+const int balanceInicialCuenta = 10_000;
 
 const string teclasRetiroConRecibo = "AAA";
 const string teclasRetiroSinRecibo = "AAC";
@@ -118,10 +118,11 @@ static void SecuenciaDeTransaccionesDeEjemplo(IATM atm, string numeroTarjeta)
     atm.EnviarTransactionRequest(teclasRetiroConRecibo, numeroTarjeta, pin, 6_500);
 
     EsperarTeclaEnter(
-        "Presione ENTER para realizar un intento de retiro de 4_000 que declinará por fondos insuficientes");
+        $"Presione ENTER para realizar un intento de retiro de 4_000 que declinará por fondos insuficientes"); //Recordar que el resultado de este codigo dependera si es una cuenta de Ahorro o de Corriente y las de corrientes tienen un limite en el sobregiro realizado
+
     atm.EnviarTransactionRequest(teclasRetiroConRecibo, numeroTarjeta, pin, 4_000);
 
-    EsperarTeclaEnter("Presione ENTER para realizar un retiro de 12,000 sin impresión de recibo");
+    EsperarTeclaEnter($"Presione ENTER para realizar un retiro de 12,000 sin impresión de recibo");
     atm.EnviarTransactionRequest(teclasConsultaDeBalance, numeroTarjeta, pin);
 
     EsperarTeclaEnter("Presione ENTER para finalizar");
